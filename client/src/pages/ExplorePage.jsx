@@ -1,53 +1,55 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import HeaderNav from '../components/HeaderNav.jsx'
 import SiteFooter from '../components/SiteFooter.jsx'
+import { useLanguage } from '../context/LanguageContext.jsx'
 
 const FILTERS = ['ALL', 'FOOD', 'CULTURE', 'NATURE', 'HIDDEN GEMS']
 
-const TRENDING_CARDS = [
-  {
-    rank: '01',
-    image:
-      'https://lh3.googleusercontent.com/aida-public/AB6AXuDrsvu4SLfDxz2SZF7YtXh_sSC7ZQ5cVQcDR8Pch6_mJa9HNQ-fnKxx3TvoujnV1fbozYej7Mg0JASxrXL_gLvTdHysXAAflmKqcxRAPJEm7Z8sGGhxnfvwkKPMR2ueiAAGRvkuBgD4vYpPxfuIAexHRmTZ0rPAk0h7zhhsF3GYDMD43_RcsSKiMuQJwicVwDrww6c0WvyjTeh5Hy6ljOdz3UTeqCbE8XdMomtAQgFLdsWjIefdI5y3RhpauTYeP_XusmekHtLCkBo',
-    alt: 'George Town',
-    title: 'Heritage Bites of George Town',
-    description:
-      "Deciphering the digital heartbeat of Malaysia's travel landscape through authentic street flavors.",
-    tags: ['CULINARY', 'HERITAGE'],
-    likes: '4.9M LIKES',
-    saved: '1.2M SAVED',
-    source: 'VIA REDNOTE',
-    sourceIcon: 'database',
-  },
-  {
-    rank: '02',
-    image:
-      'https://lh3.googleusercontent.com/aida-public/AB6AXuCHFVIZL6pywLDdWc7dwmuqTFidpyV2VD2l4JwwMdUfG_rErPIMPQMVoeIWUDybx1uDxjV7jG3D3QW9aNlUCqxXL_d4vss__bqyht-8xQWHOApeGVJhBQJR4m7dhS4EJRQE6l2pCrN9ICdK9OzCFbFIbQx3C2W5p-MZqiikvtwlksxLpMDEQL5G3bbdoxPYeTWSm5kOEV5t6dqJduNJM2bZsZOd0W-n6F2HGmyF2eJfc1VC8Srthw_zDZDjI-7-fpXvOFc5FsOfbNo',
-    alt: 'Mossy Forest',
-    title: 'The Ethereal Mossy Forest',
-    description:
-      'A surge in international exploration interest following major documentary features.',
-    tags: ['NATURE', 'EXPLORE'],
-    likes: '2.4M LIKES',
-    saved: '850K SAVED',
-    source: 'VIA TIKTOK',
-    sourceIcon: 'music_note',
-  },
-  {
-    rank: '03',
-    image:
-      'https://lh3.googleusercontent.com/aida-public/AB6AXuCaDhOL4uIEMeLAtgzL5oD1eQCNSU-6Zwzn-uGwRB_VcY7AXAibQR4NX24qnR-79y7kHJHNQ1B50C1VSOCQiGefgWXVYxJ9pcGHNZUqQRF94bYQmhn26i_I30WYmTb8fF06RXdZh7W6mbJKgs0f64Ydd4PQrGWS-EbNGlnWOckRwLYRUf5onNMhnWXsGWo5mwl96jTcnd0JaCRv5fS8dRlcxj8_d3dNnQELRYMiaHvcHovQ6tIj_fd8gLpGdgazqTBM1tZcuJMujT8',
-    alt: 'Silk Batik',
-    title: 'Silk Batik Mastery',
-    description:
-      'The most talked-about cultural moments trending across the peninsula right now.',
-    tags: ['CULTURE', 'HERITAGE'],
-    likes: '1.1M LIKES',
-    saved: '320K SAVED',
-    source: 'VIA INSTAGRAM',
-    sourceIcon: 'photo_camera',
-  },
+const MALAYSIA_STATES = [
+  'ALL STATES',
+  'Perlis',
+  'Kedah',
+  'Penang',
+  'Perak',
+  'Selangor',
+  'Negeri Sembilan',
+  'Melaka',
+  'Johor',
+  'Pahang',
+  'Terengganu',
+  'Kelantan',
+  'Sabah',
+  'Sarawak',
+  'Kuala Lumpur',
+  'Putrajaya',
+  'Labuan',
 ]
+
+function formatSaved(collected) {
+  if (!collected) return '—'
+  return `${collected} SAVED`
+}
+
+function mapToExploreCard(item, index) {
+  const categories = item.categories?.length ? item.categories : [item.category].filter(Boolean)
+  const tags = categories.slice(0, 2)
+  return {
+    id: item.id,
+    rank: String(index + 1).padStart(2, '0'),
+    state: item.state || 'Malaysia',
+    categories,
+    image: item.image,
+    alt: item.title,
+    title: item.title,
+    description: item.description,
+    tags,
+    likes: (item.likesLabel || item.likes || '—').replace(/^🔥\s*/, '').toUpperCase(),
+    saved: formatSaved(item.collected),
+    source: item.sourceLabel || 'VIA REDNOTE',
+    sourceIcon: item.sourceIcon || 'database',
+    noteUrl: item.noteUrl,
+  }
+}
 
 function ExploreCard({ card }) {
   return (
@@ -76,7 +78,10 @@ function ExploreCard({ card }) {
       <div className="mt-4">
         <h3 className="font-headline-md text-2xl text-primary mb-2">{card.title}</h3>
         <p className="font-body-md text-sm text-on-surface-variant mb-4 line-clamp-2">{card.description}</p>
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-2 items-center">
+          <span className="px-3 py-1 rounded-full text-[10px] font-label-caps bg-surface-container text-on-surface-variant border border-outline-variant/40">
+            {card.state}
+          </span>
           {card.tags.map((tag) => (
             <span
               key={tag}
@@ -113,17 +118,66 @@ function ExploreCard({ card }) {
   )
 }
 
+function matchesCategory(card, filter) {
+  if (filter === 'ALL') return true
+  return card.categories?.includes(filter)
+}
+
+function matchesState(card, state) {
+  if (state === 'ALL STATES') return true
+  return card.state === state
+}
+
 export default function ExplorePage() {
+  const { language, ui } = useLanguage()
   const [activeFilter, setActiveFilter] = useState('ALL')
+  const [activeState, setActiveState] = useState('ALL STATES')
+  const [posts, setPosts] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
+
+  useEffect(() => {
+    let cancelled = false
+    setLoading(true)
+    setError(null)
+    fetch(`/api/trending?limit=100&lang=${encodeURIComponent(language)}`)
+      .then((res) => {
+        if (!res.ok) throw new Error('Failed to load explore posts')
+        return res.json()
+      })
+      .then((data) => {
+        if (!cancelled) setPosts(data.map(mapToExploreCard))
+      })
+      .catch((err) => {
+        if (!cancelled) setError(err.message)
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [language])
+
+  const filteredCards = posts.filter(
+    (card) => matchesCategory(card, activeFilter) && matchesState(card, activeState),
+  )
 
   return (
-    <div
-      className="text-on-surface font-body-md min-h-screen flex flex-col antialiased bg-background bg-paper-texture"
-      style={{ backgroundBlendMode: 'soft-light' }}
-    >
+    <div className="text-on-surface font-body-md min-h-screen flex flex-col antialiased bg-background bg-paper-texture relative overflow-x-hidden">
+      <span className="material-symbols-outlined batik-watermark text-[400px] text-primary -top-20 -left-20 rotate-12 pointer-events-none">
+        local_florist
+      </span>
+      <span className="material-symbols-outlined batik-watermark text-[300px] text-primary top-1/2 -right-20 -rotate-12 pointer-events-none">
+        waves
+      </span>
+      <span className="material-symbols-outlined batik-watermark text-[250px] text-primary bottom-0 left-1/4 rotate-45 pointer-events-none">
+        spa
+      </span>
+
       <HeaderNav activePage="explore" />
 
-      <main className="flex-grow max-w-container-max mx-auto w-full px-margin-mobile md:px-margin-desktop pt-40 pb-20">
+      <main className="flex-grow max-w-container-max mx-auto w-full px-margin-mobile md:px-margin-desktop pt-40 pb-20 z-10 relative">
         <section className="mb-20 relative">
           <div className="max-w-2xl">
             <h1 className="font-display-lg text-display-lg md:text-[96px] text-primary mb-6 leading-none">
@@ -138,38 +192,85 @@ export default function ExplorePage() {
           </div>
         </section>
 
-        <section className="flex flex-col md:flex-row justify-between items-center gap-6 mb-16">
-          <div className="flex flex-wrap items-center gap-2 p-1.5 bg-surface-container rounded-full border border-outline-variant/30">
-            {FILTERS.map((filter) => (
-              <button
-                key={filter}
-                type="button"
-                onClick={() => setActiveFilter(filter)}
-                className={`px-6 py-2.5 rounded-full font-label-caps text-[11px] tracking-widest transition-all ${
-                  activeFilter === filter
-                    ? 'bg-primary text-on-primary shadow-sm'
-                    : 'text-primary hover:bg-white/50'
-                }`}
-              >
-                {filter}
-              </button>
-            ))}
+        <section className="flex flex-col gap-4 mb-16">
+          <div className="flex flex-col lg:flex-row justify-between items-stretch lg:items-center gap-4">
+            <div className="flex flex-wrap items-center gap-2 p-1.5 bg-surface-container rounded-full border border-outline-variant/30">
+              {FILTERS.map((filter) => (
+                <button
+                  key={filter}
+                  type="button"
+                  onClick={() => setActiveFilter(filter)}
+                  className={`px-6 py-2.5 rounded-full font-label-caps text-[11px] tracking-widest transition-all ${
+                    activeFilter === filter
+                      ? 'bg-primary text-on-primary shadow-sm'
+                      : 'text-primary hover:bg-white/50'
+                  }`}
+                >
+                  {filter}
+                </button>
+              ))}
+            </div>
+            <button
+              type="button"
+              className="flex items-center justify-center gap-3 px-8 py-3 rounded-full border border-primary text-primary font-label-caps text-[11px] tracking-widest hover:bg-primary hover:text-on-primary transition-all shrink-0"
+            >
+              SORT BY: TRENDING NOW
+              <span className="material-symbols-outlined text-sm">swap_vert</span>
+            </button>
           </div>
-          <button
-            type="button"
-            className="flex items-center gap-3 px-8 py-3 rounded-full border border-primary text-primary font-label-caps text-[11px] tracking-widest hover:bg-primary hover:text-on-primary transition-all"
-          >
-            SORT BY: TRENDING NOW
-            <span className="material-symbols-outlined text-sm">swap_vert</span>
-          </button>
+
+          <div className="flex flex-wrap items-center gap-3">
+            <span className="font-label-caps text-[11px] tracking-widest text-on-surface-variant">
+              STATE
+            </span>
+            <div className="relative">
+              <select
+                value={activeState}
+                onChange={(e) => setActiveState(e.target.value)}
+                className="appearance-none pl-5 pr-10 py-2.5 rounded-full border border-outline-variant/50 bg-surface-container-lowest text-primary font-label-caps text-[11px] tracking-widest cursor-pointer hover:border-primary focus:border-primary focus:outline-none min-w-[180px]"
+                aria-label="Filter by state"
+              >
+                {MALAYSIA_STATES.map((state) => (
+                  <option key={state} value={state}>
+                    {state}
+                  </option>
+                ))}
+              </select>
+              <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-primary text-[20px] pointer-events-none">
+                expand_more
+              </span>
+            </div>
+            {activeState !== 'ALL STATES' && (
+              <button
+                type="button"
+                onClick={() => setActiveState('ALL STATES')}
+                className="font-label-caps text-[10px] text-secondary hover:text-primary transition-colors"
+              >
+                Clear state
+              </button>
+            )}
+          </div>
         </section>
 
         <section>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {TRENDING_CARDS.map((card) => (
-              <ExploreCard key={card.rank} card={card} />
-            ))}
-          </div>
+          {loading ? (
+            <p className="font-body-lg text-on-surface-variant text-center py-16">{ui.loadingTrending}</p>
+          ) : error ? (
+            <p className="font-body-lg text-on-surface-variant text-center py-16">
+              Could not load posts. Run <code className="text-primary">npm run dev</code> and{' '}
+              <code className="text-primary">npm run import:trending</code> in server.
+            </p>
+          ) : filteredCards.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              {filteredCards.map((card) => (
+                <ExploreCard key={card.id} card={card} />
+              ))}
+            </div>
+          ) : (
+            <p className="font-body-lg text-on-surface-variant text-center py-16">
+              No trending posts for this filter yet. Try another state or category.
+            </p>
+          )}
         </section>
       </main>
 

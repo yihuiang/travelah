@@ -59,7 +59,7 @@ app.get('/api/health', (_req, res) => {
 
 app.get('/api/trending', async (req, res) => {
   try {
-    const limit = Math.min(parseInt(req.query.limit, 10) || 3, 20)
+    const limit = Math.min(parseInt(req.query.limit, 10) || 3, 100)
     const lang = req.query.lang || TRENDING_SOURCE_LANG
     const items = loadTrending().slice(0, limit)
     const locales = loadLocales()

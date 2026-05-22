@@ -88,3 +88,19 @@ body {
   -webkit-text-stroke: 1px #5c1e05;
   color: transparent;
 }
+
+.luxury-shadow {
+  box-shadow: 0px 4px 20px rgba(44, 44, 44, 0.05);
+}
+
+.luxury-shadow-hover:hover {
+  box-shadow: 0px 8px 30px rgba(44, 44, 44, 0.08);
+  border-color: rgba(218, 193, 185, 0.5);
+}
+
+.batik-watermark {
+  position: absolute;
+  opacity: 0.03;
+  pointer-events: none;
+  z-index: 0;
+}

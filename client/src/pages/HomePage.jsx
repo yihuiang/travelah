@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom'
 import HeaderNav from '../components/HeaderNav.jsx'
 import SiteFooter from '../components/SiteFooter.jsx'
 import TrendingSection from '../components/TrendingSection.jsx'
@@ -40,8 +41,10 @@ export default function HomePage() {
         <section className="w-full flex flex-col items-center justify-center min-h-[50vh] relative">
           <div className="absolute -z-10 top-0 opacity-10 blur-3xl w-[800px] h-[400px] bg-primary rounded-full filter mix-blend-multiply" />
           <h1 className="font-display-lg text-primary max-w-6xl text-center flex flex-col leading-none">
-            <span className="mb-4">{ui.welcomeTo}</span>
-            <span className="italic font-light tracking-tight md:text-[140px] block transform -translate-y-4">
+            <span className="mb-2 md:mb-4 text-[44px] md:text-[60px] leading-none">
+              {ui.welcomeTo}
+            </span>
+            <span className="italic font-light tracking-tight text-[56px] md:text-[140px] block leading-none md:-translate-y-4">
               {ui.malaysia}
             </span>
           </h1>
@@ -110,12 +113,12 @@ export default function HomePage() {
               pure tranquility.
             </p>
             <div className="flex flex-wrap gap-4 mt-4">
-              <button
-                type="button"
+              <Link
+                to="/plan"
                 className="bg-primary text-white px-10 py-5 rounded-full font-label-caps hover:bg-primary-container hover:shadow-xl transition-all flex items-center gap-3"
               >
                 Start Planning <span className="material-symbols-outlined text-sm">east</span>
-              </button>
+              </Link>
               <button
                 type="button"
                 className="border border-outline px-10 py-5 rounded-full font-label-caps hover:bg-white transition-all"

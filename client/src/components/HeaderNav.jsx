@@ -22,9 +22,9 @@ export default function HeaderNav({ activePage } = {}) {
           <a className={navLinkClass(false)} href="/#trips">
             {ui.myTrips}
           </a>
-          <a className={navLinkClass(false)} href="/#plan">
+          <Link to="/plan" className={navLinkClass(activePage === 'plan')}>
             {ui.plan}
-          </a>
+          </Link>
         </nav>
         <div className="flex items-center gap-6 border-l border-white/20 pl-8">
           <details className="relative font-label-caps text-white/70 hover:text-white transition-colors [&_summary]:list-none [&_summary::-webkit-details-marker]:hidden">

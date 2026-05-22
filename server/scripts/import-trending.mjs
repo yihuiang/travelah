@@ -1,89 +1,117 @@
+/**
+ * RedNote (XHS) pipeline: CSV → clean → platforms/xhs.json → trending.json
+ *
+ * CSV is the raw crawl export (easy for MediaCrawler).
+ * JSON is what the Node API and React app read (fast, one file load).
+ *
+ * Many CSV batches (malaysia, penang, …) are cleaned and merged into ONE
+ * platform file: data/platforms/xhs.json
+ *
+ * data/trending.json = all platforms combined (xhs + dy + … when you add them).
+ *
+ * Usage:
+ *   npm run import:trending
+ *   node scripts/import-trending.mjs path/to/extra.csv
+ */
 import fs from 'fs'
 import path from 'path'
 import { fileURLToPath } from 'url'
 import { parse } from 'csv-parse/sync'
+import { mergePosts, cleanPost, normalizeRow } from './lib/xhs-pipeline.mjs'
+import { withSourceDisplay } from './lib/platforms.mjs'
+import { mergeAllPlatformFiles } from './lib/merge-platforms.mjs'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
-const defaultCsv = path.resolve(
-  __dirname,
-  '../../../FYP_Project/MediaCrawler/data/xhs/csv/search_contents_2026-05-16_xhs_01test.csv',
-)
-const csvPath = process.argv[2] ? path.resolve(process.argv[2]) : defaultCsv
-const outPath = path.resolve(__dirname, '../data/trending.json')
+const PLATFORM = 'xhs'
+const mediaCrawlerCsv = path.resolve(__dirname, '../../../MediaCrawler/data/xhs/csv')
+const platformsDir = path.resolve(__dirname, '../data/platforms')
+const platformOutPath = path.join(platformsDir, 'xhs.json')
+const trendingPath = path.resolve(__dirname, '../data/trending.json')
+const statsPath = path.resolve(__dirname, '../data/import-stats.json')
 
-function parseLikes(value) {
-  if (!value) return 0
-  const raw = String(value).trim().replace(/,/g, '')
-  const match = raw.match(/^([\d.]+)\s*万/)
-  if (match) return Math.round(parseFloat(match[1]) * 10000)
-  const num = parseInt(raw.replace(/\D/g, ''), 10)
-  return Number.isNaN(num) ? 0 : num
-}
+const DEFAULT_BATCHES = [
+  { file: path.join(mediaCrawlerCsv, 'malaysia_contents_xhs.csv'), label: 'malaysia' },
+  { file: path.join(mediaCrawlerCsv, 'penang_contents_xhs.csv'), label: 'penang' },
+]
 
-function cleanDesc(text) {
-  if (!text) return ''
-  const cleaned = text
-    .replace(/#[^#\s\n\[]+(\[话题\])?#?/g, '')
-    .replace(/\s+/g, ' ')
-    .trim()
-  if (cleaned.length < 8) return ''
-  return cleaned.slice(0, 180)
-}
-
-function firstImage(imageList) {
-  if (!imageList) return ''
-  const url = imageList.split(/[,;]/)[0]?.trim()
-  return url || ''
-}
-
-function firstTag(tagList, sourceKeyword) {
-  if (tagList) {
-    const tag = tagList.split(',')[0]?.trim()
-    if (tag) return tag
+function loadCsv(filePath, batchLabel) {
+  if (!fs.existsSync(filePath)) {
+    throw new Error(`CSV not found: ${filePath}`)
   }
-  return sourceKeyword || 'Malaysia'
+  const rows = parse(fs.readFileSync(filePath, 'utf8'), {
+    columns: true,
+    skip_empty_lines: true,
+    relax_quotes: true,
+    relax_column_count: true,
+  })
+  return rows.map((row, index) => normalizeRow(row, index, { batchLabel }))
 }
 
-function formatLikes(value) {
-  if (!value) return 'Trending'
-  const raw = String(value).trim()
-  if (raw.includes('万')) return `🔥 ${raw} likes`
-  return `🔥 ${raw} likes`
+function runBatch(filePath, batchLabel) {
+  const normalized = loadCsv(filePath, batchLabel)
+  const kept = []
+  const dropped = {}
+
+  for (const post of normalized) {
+    const result = cleanPost(post)
+    if (result.ok) {
+      kept.push(withSourceDisplay(post))
+    } else {
+      dropped[result.reason] = (dropped[result.reason] || 0) + 1
+    }
+  }
+
+  return { batchLabel, filePath, raw: normalized.length, kept, dropped }
 }
 
-const csvText = fs.readFileSync(csvPath, 'utf8')
-const rows = parse(csvText, {
-  columns: true,
-  skip_empty_lines: true,
-  relax_quotes: true,
-  relax_column_count: true,
-})
+function main() {
+  const cliFiles = process.argv.slice(2).map((p) => path.resolve(p))
+  const batches =
+    cliFiles.length > 0
+      ? cliFiles.map((file, i) => ({ file, label: `batch-${i + 1}` }))
+      : DEFAULT_BATCHES
 
-function rowNoteId(row, index) {
-  const id = row.note_id || row['\ufeffnote_id']
-  return id?.trim() || `row-${index}`
+  const batchReports = []
+  const allKept = []
+
+  for (const { file, label } of batches) {
+    const report = runBatch(file, label)
+    batchReports.push(report)
+    allKept.push(...report.kept)
+    console.log(
+      `[${label}] ${path.basename(file)}: ${report.raw} rows → ${report.kept.length} kept`,
+    )
+    if (Object.keys(report.dropped).length) {
+      console.log(`  dropped:`, report.dropped)
+    }
+  }
+
+  const platformMerged = mergePosts(allKept)
+  const duplicateInBatches = allKept.length - platformMerged.length
+
+  fs.mkdirSync(platformsDir, { recursive: true })
+  fs.writeFileSync(platformOutPath, JSON.stringify(platformMerged, null, 2), 'utf8')
+  console.log(`\nRedNote (${PLATFORM}): ${allKept.length} → ${platformMerged.length} unique`)
+  console.log(`Wrote ${platformOutPath}`)
+
+  const trending = mergeAllPlatformFiles(platformsDir)
+  fs.writeFileSync(trendingPath, JSON.stringify(trending, null, 2), 'utf8')
+  console.log(`Combined feed: ${trending.length} posts from all platforms → ${trendingPath}`)
+
+  const stats = {
+    importedAt: new Date().toISOString(),
+    platform: PLATFORM,
+    batches: batchReports,
+    totalAfterClean: allKept.length,
+    duplicatesRemovedInPlatform: duplicateInBatches,
+    platformCount: platformMerged.length,
+    combinedTrendingCount: trending.length,
+    platformFiles: fs.readdirSync(platformsDir).filter((f) => f.endsWith('.json')),
+  }
+  fs.writeFileSync(statsPath, JSON.stringify(stats, null, 2), 'utf8')
+  console.log(`Stats ${statsPath}`)
+  console.log('\nNext: npm run pretranslate')
+  console.log('Add more CSV paths to DEFAULT_BATCHES in import-trending.mjs, or pass files on the CLI.')
 }
 
-const trending = rows
-  .map((row, index) => ({
-    id: rowNoteId(row, index),
-    title: (row.title || 'Untitled').trim(),
-    description: cleanDesc(row.desc) || (row.title || '').trim(),
-    image: firstImage(row.image_list),
-    location: row.ip_location?.trim() || row.source_keyword?.trim() || 'Malaysia',
-    category: firstTag(row.tag_list, row.source_keyword),
-    likes: row.liked_count || '',
-    likesScore: parseLikes(row.liked_count),
-    likesLabel: formatLikes(row.liked_count),
-    comments: row.comment_count || '',
-    shares: row.share_count || '',
-    author: row.nickname || '',
-    noteUrl: row.note_url || '',
-    type: row.type || 'normal',
-  }))
-  .filter((item) => item.image && item.title)
-  .sort((a, b) => b.likesScore - a.likesScore)
-
-fs.mkdirSync(path.dirname(outPath), { recursive: true })
-fs.writeFileSync(outPath, JSON.stringify(trending, null, 2), 'utf8')
-console.log(`Imported ${trending.length} items → ${outPath}`)
+main()

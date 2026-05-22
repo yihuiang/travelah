@@ -8,6 +8,9 @@
     "start": "node src/index.js",
     "dev": "node --watch src/index.js",
     "import:trending": "node scripts/import-trending.mjs",
+    "import:rednote": "node scripts/import-trending.mjs",
+    "import:trending:malaysia": "node scripts/import-trending.mjs ../../../MediaCrawler/data/xhs/csv/malaysia_contents_xhs.csv",
+    "import:trending:penang": "node scripts/import-trending.mjs ../../../MediaCrawler/data/xhs/csv/penang_contents_xhs.csv",
     "pretranslate": "node scripts/pretranslate-trending.mjs"
   },
   "dependencies": {
