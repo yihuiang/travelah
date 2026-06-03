@@ -11,13 +11,19 @@
     "import:rednote": "node scripts/import-trending.mjs",
     "import:trending:malaysia": "node scripts/import-trending.mjs ../../../MediaCrawler/data/xhs/csv/malaysia_contents_xhs.csv",
     "import:trending:penang": "node scripts/import-trending.mjs ../../../MediaCrawler/data/xhs/csv/penang_contents_xhs.csv",
-    "pretranslate": "node scripts/pretranslate-trending.mjs"
+    "pretranslate": "node scripts/pretranslate-trending.mjs",
+    "seed:mongodb": "node scripts/seed-mongodb.mjs",
+    "seed:users": "node scripts/seed-users.mjs",
+    "seed:places": "node scripts/seed-places.mjs"
   },
   "dependencies": {
     "@vitalets/google-translate-api": "^9.2.1",
+    "bcryptjs": "^3.0.2",
     "cors": "^2.8.5",
     "csv-parse": "^6.2.1",
     "dotenv": "^16.5.0",
-    "express": "^5.1.0"
+    "express": "^5.1.0",
+    "jsonwebtoken": "^9.0.2",
+    "mongodb": "^6.16.0"
   }
 }

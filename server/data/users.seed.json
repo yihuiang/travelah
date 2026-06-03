@@ -1,0 +1,36 @@
+[
+  {
+    "_id": "U01",
+    "username": "esterling",
+    "password": "travelah123",
+    "email": "e.sterling@travelah.demo",
+    "displayName": "E. Sterling",
+    "avatarUrl": "https://lh3.googleusercontent.com/aida-public/AB6AXuAFu5QYb4ZvK75YvK0bJMfDq58QCsvI9R6Xd_4DwsLV0ftR4kFiNXVRaZfrJVoaNI_SFhFeAMN5sGK3gI99K_FI-iOw-l82XpaK-RKwBw4l8X_ZhoNoM4rM4ernyPyIl-rUhRGo1bu8ZgxjIvgwrtOr1BYmPsmbOQklYjqidVIKlE0nPED5xkqygu7cptxdJu0jkkM_ABOQOMSj5hRj_MPPhYu9jmPXPaVHiNKecMbSeIUDeklE6i_XScZ0v-BCi0OxdJ9bnc-GUxY",
+    "memberSince": "2023-01-15T00:00:00.000Z",
+    "preferences": {
+      "pace": "Leisurely",
+      "focus": "Heritage",
+      "dining": "Culinary Arts"
+    },
+    "settings": {
+      "language": "en-GB",
+      "currency": "MYR"
+    },
+    "savedItineraries": [
+      {
+        "location": "Penang, Malaysia",
+        "title": "Echoes of Georgetown",
+        "description": "A three-day exploration of colonial architecture, hidden clan jetties, and undisputed culinary masterpieces.",
+        "image": "https://lh3.googleusercontent.com/aida-public/AB6AXuBVQy2kHjQNRYkh7WxaAgFI1kiJHhi17ZrMWJGo9yJFzeLxUJmp-yQJJ8kcBKZXVlyXsLiiVVhv1TJ8-hzohg3D4dKID3iPkNgBoMefOslqJYkoi7tfaRPHYpvMOympRIyQLC6Vd7dOT8P-9IYtVo-aFveZelaIE2_pIJyJURDuDILdWM_cY-HuhWY6t-peRYaxV9k8ObZo72JTQpQrjf1mCG3rbMpFMuLX-WZCNpFis3Rv_L6vE242-QTfDKiwfwCCSyPKCRkbn7Q",
+        "offset": false
+      },
+      {
+        "location": "Langkawi, Malaysia",
+        "title": "Andaman Retreat",
+        "description": "Five nights of absolute seclusion nestled between ancient rainforests and the emerald expanse of the sea.",
+        "image": "https://lh3.googleusercontent.com/aida-public/AB6AXuCTy0vxicnjoW6Fm_l3rQTbPGTchCi5T3eYaP2Uq9j5grab3w6HTnlusJ-1Auk87RxA_RorCoWErZzyhIwaun80VnS-3sDZo8LA4_Bfb7kO4nTD28l4OBbTgXsRpzBPEpdupc6DsJ203V3sCSO85TTDMMMMfe8X6Bgpg2vvUADtb9b_UqihOiPU75OFGtdCP_HrNz3_EJ8GTxbGcaheFQm7XZS8pLQViW75c0qar_82rs6NNVBqsVEu4VBMEdybfOfuoJ-qIAQlVYM",
+        "offset": true
+      }
+    ]
+  }
+]

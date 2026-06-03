@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import HeaderNav from '../components/HeaderNav.jsx'
 import SiteFooter from '../components/SiteFooter.jsx'
 import { useLanguage } from '../context/LanguageContext.jsx'
 
 const FILTERS = ['ALL', 'FOOD', 'CULTURE', 'NATURE', 'HIDDEN GEMS']
+const PAGE_SIZE = 9
 
 const MALAYSIA_STATES = [
   'ALL STATES',
@@ -25,58 +27,54 @@ const MALAYSIA_STATES = [
   'Labuan',
 ]
 
-function formatSaved(collected) {
-  if (!collected) return '—'
-  return `${collected} SAVED`
-}
-
-function mapToExploreCard(item, index) {
-  const categories = item.categories?.length ? item.categories : [item.category].filter(Boolean)
+function mapPlaceToCard(place, index) {
+  const categories = place.categories?.length ? place.categories : []
   const tags = categories.slice(0, 2)
   return {
-    id: item.id,
+    id: place.id,
     rank: String(index + 1).padStart(2, '0'),
-    state: item.state || 'Malaysia',
+    state: place.state || 'Malaysia',
     categories,
-    image: item.image,
-    alt: item.title,
-    title: item.title,
-    description: item.description,
+    image: place.coverImage,
+    alt: place.name,
+    title: place.name,
+    description: place.description || '',
     tags,
-    likes: (item.likesLabel || item.likes || '—').replace(/^🔥\s*/, '').toUpperCase(),
-    saved: formatSaved(item.collected),
-    source: item.sourceLabel || 'VIA REDNOTE',
-    sourceIcon: item.sourceIcon || 'database',
-    noteUrl: item.noteUrl,
+    likes: (place.likesLabel || '').replace(/^🔥\s*/, '').toUpperCase() || `${place.totalLikes} LIKES`,
+    saved: `${place.postCount || 0} POSTS`,
+    source: 'TRENDING PLACE',
+    sourceIcon: 'place',
   }
 }
 
 function ExploreCard({ card }) {
   return (
-    <article className="flex flex-col group">
+    <Link to={`/explore/place/${card.id}`} className="flex flex-col group no-underline text-inherit">
       <div className="relative mb-6">
-        <div className="relative aspect-[4/3] rounded-3xl overflow-hidden">
-          <img
-            alt={card.alt}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-            src={card.image}
-          />
+        <div className="relative aspect-[4/3] rounded-3xl overflow-hidden bg-surface-container">
+          {card.image ? (
+            <img
+              alt={card.alt}
+              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+              src={card.image}
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center text-primary/40">
+              <span className="material-symbols-outlined text-6xl">place</span>
+            </div>
+          )}
           <div className="absolute top-4 right-6 rank-number-outline font-headline-lg text-4xl italic">
             {card.rank}
           </div>
         </div>
         <div className="absolute -bottom-6 -right-1 bg-surface w-16 h-16 rounded-tl-[2rem] flex items-center justify-center">
-          <button
-            type="button"
-            className="w-12 h-12 bg-primary-fixed rounded-full flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-on-primary transition-colors cursor-pointer"
-            aria-label="Save"
-          >
-            <span className="material-symbols-outlined text-xl">bookmark</span>
-          </button>
+          <span className="w-12 h-12 bg-primary-fixed rounded-full flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-on-primary transition-colors">
+            <span className="material-symbols-outlined text-xl">arrow_forward</span>
+          </span>
         </div>
       </div>
       <div className="mt-4">
-        <h3 className="font-headline-md text-2xl text-primary mb-2">{card.title}</h3>
+        <h3 className="font-headline-md text-2xl text-primary mb-2 group-hover:underline">{card.title}</h3>
         <p className="font-body-md text-sm text-on-surface-variant mb-4 line-clamp-2">{card.description}</p>
         <div className="flex flex-wrap gap-2 items-center">
           <span className="px-3 py-1 rounded-full text-[10px] font-label-caps bg-surface-container text-on-surface-variant border border-outline-variant/40">
@@ -102,37 +100,26 @@ function ExploreCard({ card }) {
               <span className="font-label-caps text-[10px] text-on-surface-variant">{card.likes}</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <span className="material-symbols-outlined text-sm text-secondary">bookmark</span>
+              <span className="material-symbols-outlined text-sm text-secondary">article</span>
               <span className="font-label-caps text-[10px] text-on-surface-variant">{card.saved}</span>
             </div>
             <div className="ml-auto flex items-center gap-1.5">
               <span className="font-label-caps text-[9px] text-primary/50">{card.source}</span>
-              <span className="material-symbols-outlined text-[16px] opacity-60 text-secondary">
-                {card.sourceIcon}
-              </span>
+              <span className="material-symbols-outlined text-[16px] opacity-60 text-secondary">place</span>
             </div>
           </div>
         </div>
       </div>
-    </article>
+    </Link>
   )
 }
 
-function matchesCategory(card, filter) {
-  if (filter === 'ALL') return true
-  return card.categories?.includes(filter)
-}
-
-function matchesState(card, state) {
-  if (state === 'ALL STATES') return true
-  return card.state === state
-}
-
 export default function ExplorePage() {
-  const { language, ui } = useLanguage()
+  const { ui } = useLanguage()
   const [activeFilter, setActiveFilter] = useState('ALL')
   const [activeState, setActiveState] = useState('ALL STATES')
-  const [posts, setPosts] = useState([])
+  const [places, setPlaces] = useState([])
+  const [currentPage, setCurrentPage] = useState(1)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
@@ -140,13 +127,21 @@ export default function ExplorePage() {
     let cancelled = false
     setLoading(true)
     setError(null)
-    fetch(`/api/trending?limit=100&lang=${encodeURIComponent(language)}`)
+    const params = new URLSearchParams({
+      limit: '60',
+      state: activeState,
+      category: activeFilter,
+    })
+    fetch(`/api/places?${params}`)
       .then((res) => {
-        if (!res.ok) throw new Error('Failed to load explore posts')
+        if (!res.ok) throw new Error('Failed to load places')
         return res.json()
       })
       .then((data) => {
-        if (!cancelled) setPosts(data.map(mapToExploreCard))
+        if (!cancelled) {
+          setPlaces(data.map(mapPlaceToCard))
+          setCurrentPage(1)
+        }
       })
       .catch((err) => {
         if (!cancelled) setError(err.message)
@@ -157,11 +152,11 @@ export default function ExplorePage() {
     return () => {
       cancelled = true
     }
-  }, [language])
+  }, [activeFilter, activeState])
 
-  const filteredCards = posts.filter(
-    (card) => matchesCategory(card, activeFilter) && matchesState(card, activeState),
-  )
+  const totalPages = Math.max(1, Math.ceil(places.length / PAGE_SIZE))
+  const pageStart = (currentPage - 1) * PAGE_SIZE
+  const pagedPlaces = places.slice(pageStart, pageStart + PAGE_SIZE)
 
   return (
     <div className="text-on-surface font-body-md min-h-screen flex flex-col antialiased bg-background bg-paper-texture relative overflow-x-hidden">
@@ -186,8 +181,7 @@ export default function ExplorePage() {
               <span className="italic font-light">of Malaysia</span>
             </h1>
             <p className="font-body-lg text-body-lg text-on-surface-variant max-w-md">
-              The most talked-about destinations, flavors, and cultural moments trending across the
-              peninsula right now.
+              Trending cafés, markets, and landmarks — ranked by buzz across RedNote posts.
             </p>
           </div>
         </section>
@@ -257,18 +251,47 @@ export default function ExplorePage() {
             <p className="font-body-lg text-on-surface-variant text-center py-16">{ui.loadingTrending}</p>
           ) : error ? (
             <p className="font-body-lg text-on-surface-variant text-center py-16">
-              Could not load posts. Run <code className="text-primary">npm run dev</code> and{' '}
-              <code className="text-primary">npm run import:trending</code> in server.
+              Could not load places. Run <code className="text-primary">python nlp/extract_places.py</code> and{' '}
+              <code className="text-primary">npm run seed:places</code> in server.
             </p>
-          ) : filteredCards.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              {filteredCards.map((card) => (
-                <ExploreCard key={card.id} card={card} />
-              ))}
-            </div>
+          ) : places.length > 0 ? (
+            <>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                {pagedPlaces.map((card) => (
+                  <ExploreCard key={card.id} card={card} />
+                ))}
+              </div>
+
+              <div className="mt-12 flex flex-col md:flex-row items-center justify-between gap-4">
+                <p className="font-label-caps text-[10px] tracking-widest text-on-surface-variant">
+                  Showing {pageStart + 1}-{Math.min(pageStart + PAGE_SIZE, places.length)} of {places.length} places
+                </p>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    disabled={currentPage === 1}
+                    onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                    className="px-4 py-2 rounded-full border border-outline-variant text-primary disabled:opacity-40 disabled:cursor-not-allowed hover:bg-surface-container"
+                  >
+                    Prev
+                  </button>
+                  <span className="font-label-caps text-[11px] text-on-surface-variant min-w-[90px] text-center">
+                    Page {currentPage} / {totalPages}
+                  </span>
+                  <button
+                    type="button"
+                    disabled={currentPage === totalPages}
+                    onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                    className="px-4 py-2 rounded-full border border-outline-variant text-primary disabled:opacity-40 disabled:cursor-not-allowed hover:bg-surface-container"
+                  >
+                    Next
+                  </button>
+                </div>
+              </div>
+            </>
           ) : (
             <p className="font-body-lg text-on-surface-variant text-center py-16">
-              No trending posts for this filter yet. Try another state or category.
+              No places for this filter yet. Try another state or category.
             </p>
           )}
         </section>

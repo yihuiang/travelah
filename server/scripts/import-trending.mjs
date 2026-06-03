@@ -1,5 +1,5 @@
 /**
- * RedNote (XHS) pipeline: CSV → clean → platforms/xhs.json → trending.json
+ * RedNote (XHS) pipeline: CSV → clean → platforms/xhs.json → merged-data.json
  *
  * CSV is the raw crawl export (easy for MediaCrawler).
  * JSON is what the Node API and React app read (fast, one file load).
@@ -7,7 +7,7 @@
  * Many CSV batches (malaysia, penang, …) are cleaned and merged into ONE
  * platform file: data/platforms/xhs.json
  *
- * data/trending.json = all platforms combined (xhs + dy + … when you add them).
+ * data/merged-data.json = all platforms combined (xhs + dy + … when you add them).
  *
  * Usage:
  *   npm run import:trending
@@ -26,12 +26,15 @@ const PLATFORM = 'xhs'
 const mediaCrawlerCsv = path.resolve(__dirname, '../../../MediaCrawler/data/xhs/csv')
 const platformsDir = path.resolve(__dirname, '../data/platforms')
 const platformOutPath = path.join(platformsDir, 'xhs.json')
-const trendingPath = path.resolve(__dirname, '../data/trending.json')
+const mergedDataPath = path.resolve(__dirname, '../data/merged-data.json')
 const statsPath = path.resolve(__dirname, '../data/import-stats.json')
 
 const DEFAULT_BATCHES = [
-  { file: path.join(mediaCrawlerCsv, 'malaysia_contents_xhs.csv'), label: 'malaysia' },
-  { file: path.join(mediaCrawlerCsv, 'penang_contents_xhs.csv'), label: 'penang' },
+  { file: path.join(mediaCrawlerCsv, 'kl_search_contents_2026-05-24.csv'), label: 'kl' },
+  { file: path.join(mediaCrawlerCsv, 'melaka_search_contents_merged.csv'), label: 'melaka' },
+  { file: path.join(mediaCrawlerCsv, 'pahang_search_contents_2026-05-26.csv'), label: 'pahang' },
+  { file: path.join(mediaCrawlerCsv, 'penang_search_contents_2026-05-24.csv'), label: 'penang' },
+  { file: path.join(mediaCrawlerCsv, 'perak_search_contents_2026-05-26.csv'), label: 'perak' },
 ]
 
 function loadCsv(filePath, batchLabel) {
@@ -94,9 +97,9 @@ function main() {
   console.log(`\nRedNote (${PLATFORM}): ${allKept.length} → ${platformMerged.length} unique`)
   console.log(`Wrote ${platformOutPath}`)
 
-  const trending = mergeAllPlatformFiles(platformsDir)
-  fs.writeFileSync(trendingPath, JSON.stringify(trending, null, 2), 'utf8')
-  console.log(`Combined feed: ${trending.length} posts from all platforms → ${trendingPath}`)
+  const mergedData = mergeAllPlatformFiles(platformsDir)
+  fs.writeFileSync(mergedDataPath, JSON.stringify(mergedData, null, 2), 'utf8')
+  console.log(`Combined feed: ${mergedData.length} posts from all platforms → ${mergedDataPath}`)
 
   const stats = {
     importedAt: new Date().toISOString(),
@@ -105,7 +108,7 @@ function main() {
     totalAfterClean: allKept.length,
     duplicatesRemovedInPlatform: duplicateInBatches,
     platformCount: platformMerged.length,
-    combinedTrendingCount: trending.length,
+    combinedTrendingCount: mergedData.length,
     platformFiles: fs.readdirSync(platformsDir).filter((f) => f.endsWith('.json')),
   }
   fs.writeFileSync(statsPath, JSON.stringify(stats, null, 2), 'utf8')

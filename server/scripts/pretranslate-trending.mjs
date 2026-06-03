@@ -8,14 +8,14 @@ import { fileURLToPath } from 'url'
 import { translateFields } from '../src/translate.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
-const trendingPath = path.resolve(__dirname, '../data/trending.json')
+const mergedDataPath = path.resolve(__dirname, '../data/merged-data.json')
 const localesPath = path.resolve(__dirname, '../data/trending-locales.json')
 const FIELDS = ['title', 'description', 'category', 'location', 'likesLabel']
 const TARGET_LANGS = ['en', 'ms']
 const TOP_N = 3
 const SOURCE = 'zh-CN'
 
-const items = JSON.parse(fs.readFileSync(trendingPath, 'utf8')).slice(0, TOP_N)
+const items = JSON.parse(fs.readFileSync(mergedDataPath, 'utf8')).slice(0, TOP_N)
 const locales = {}
 
 console.log(`Pre-translating top ${items.length} posts to ${TARGET_LANGS.join(', ')}…`)
