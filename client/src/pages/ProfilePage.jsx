@@ -1,263 +1,632 @@
-import { useEffect, useState } from 'react'
-import HeaderNav from '../components/HeaderNav.jsx'
-
-const DEMO_USERNAME = 'esterling'
+import { useEffect, useMemo, useState } from 'react'
+import { Link, Navigate } from 'react-router-dom'
+import HomeTopNav from '../components/home/HomeTopNav.jsx'
+import IdentitySetupOverlay from '../components/IdentitySetupOverlay.jsx'
+import ProfileEditView from '../components/ProfileEditView.jsx'
+import { normalizePreferences } from '../constants/travelPreferences.js'
+import { useAuth } from '../context/AuthContext.jsx'
+import { formatPreferencesForDisplay, isIdentityComplete } from '../utils/preferenceSuggestions.js'
+import '../styles/home-v2.css'
+import '../styles/profile-v2.css'
 
 const LANGUAGE_OPTIONS = [
-  { value: 'en-GB', label: 'English (UK)' },
+  { value: 'en-GB', label: 'English' },
   { value: 'ms', label: 'Bahasa Melayu' },
-  { value: 'zh-CN', label: 'Mandarin 中文' },
-  { value: 'fr', label: 'Français' },
+  { value: 'zh-CN', label: '中文 Mandarin' },
 ]
 
 const CURRENCY_OPTIONS = [
-  { value: 'MYR', label: 'MYR - Ringgit' },
-  { value: 'USD', label: 'USD - Dollar' },
-  { value: 'EUR', label: 'EUR - Euro' },
+  { value: 'MYR', label: 'MYR — Ringgit Malaysia' },
+  { value: 'USD', label: 'USD — US Dollar' },
+  { value: 'SGD', label: 'SGD — Singapore Dollar' },
 ]
 
-function formatMemberSince(dateStr) {
-  if (!dateStr) return ''
-  const year = new Date(dateStr).getFullYear()
-  return `Member since ${year}`
+const STATS = [
+  { value: '3', label: 'Trips planned' },
+  { value: '5', label: 'States visited' },
+  { value: '42', label: 'Places saved' },
+  { value: '14', label: 'Nights booked' },
+]
+
+const SAVED_PLACES = [
+  {
+    id: 'penang',
+    href: '/itinerary',
+    offset: false,
+    image: 'https://images.unsplash.com/photo-1596422846543-75c6fc197f07?auto=format&fit=crop&w=600&q=80',
+    loc: 'Penang',
+    name: 'George Town Street Art',
+    desc: 'Murals, clan jetties, kopitiam culture — the one that keeps coming up in every RedNote post.',
+  },
+  {
+    id: 'melaka',
+    href: '/explore',
+    offset: true,
+    image: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?auto=format&fit=crop&w=600&q=80',
+    loc: 'Melaka',
+    name: 'Jonker Street Night Market',
+    desc: 'Weekend market in a UNESCO zone. Cendol, antiques, popiah. RM5 and you\'re full.',
+  },
+  {
+    id: 'sipadan',
+    href: '/explore',
+    offset: false,
+    image: 'https://images.unsplash.com/photo-1504214208698-ea1916a2195a?auto=format&fit=crop&w=600&q=80',
+    loc: 'Sabah',
+    name: 'Sipadan Island',
+    desc: '40-diver daily limit. Hammerheads, turtles, a 600m wall drop. Apply for permit 6 months early.',
+  },
+  {
+    id: 'taman-negara',
+    href: '/explore',
+    offset: true,
+    image: 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?auto=format&fit=crop&w=600&q=80',
+    loc: 'Pahang',
+    name: 'Taman Negara Rainforest',
+    desc: '130 million years old. Canopy walk, night trek, river cruise. Zero phone signal — in a good way.',
+  },
+]
+
+const RECENT_ACTIVITY = [
+  {
+    icon: 'auto_awesome',
+    action: 'Generated itinerary — 5 Days in Penang',
+    dest: 'Culture & Heritage · Relaxed · Mid-range',
+    time: '2 days ago',
+  },
+  {
+    icon: 'bookmark',
+    action: 'Saved Sipadan Island to collections',
+    dest: 'Sabah · Adventure · Diving',
+    time: '4 days ago',
+  },
+  {
+    icon: 'luggage',
+    action: 'Planned Melaka Weekend trip',
+    dest: 'Feb 14–16, 2026 · 3 nights',
+    time: '1 week ago',
+  },
+  {
+    icon: 'search',
+    action: 'Searched Sabah rainforest hikes',
+    dest: 'Explore · Nature & Adventure',
+    time: '1 week ago',
+  },
+  {
+    icon: 'bookmark',
+    action: 'Saved Taman Negara to collections',
+    dest: 'Pahang · Nature · Hidden Gem',
+    time: '2 weeks ago',
+  },
+]
+
+const MAX_AVATAR_BYTES = 2 * 1024 * 1024
+
+function firstName(profile, user) {
+  const raw = profile?.displayName || user?.displayName || user?.username || 'Traveler'
+  return raw.split(' ')[0]
+}
+
+function avatarInitial(profile, user) {
+  const raw = profile?.displayName || user?.displayName || user?.username || '?'
+  return raw.charAt(0).toUpperCase()
 }
 
 export default function ProfilePage() {
+  const { isAuthenticated, token, logout, updatePreferences, updateProfile, uploadAvatar, removeAvatar, user } =
+    useAuth()
   const [profile, setProfile] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [editingIdentity, setEditingIdentity] = useState(false)
+  const [editingProfile, setEditingProfile] = useState(false)
+  const [editPreferences, setEditPreferences] = useState(() => normalizePreferences({}))
+  const [identityError, setIdentityError] = useState(null)
+  const [identitySubmitting, setIdentitySubmitting] = useState(false)
+  const [profileEditError, setProfileEditError] = useState(null)
+  const [passwordEditError, setPasswordEditError] = useState(null)
+  const [avatarEditError, setAvatarEditError] = useState(null)
+  const [personalSubmitting, setPersonalSubmitting] = useState(false)
+  const [passwordSubmitting, setPasswordSubmitting] = useState(false)
+  const [avatarUploading, setAvatarUploading] = useState(false)
 
   useEffect(() => {
-    const token = localStorage.getItem('travelah_token')
-    const url = token ? '/api/profile/me' : `/api/profile/${DEMO_USERNAME}`
-    const headers = token ? { Authorization: `Bearer ${token}` } : {}
+    if (!isAuthenticated || !token) {
+      setLoading(false)
+      return
+    }
 
-    fetch(url, { headers })
-      .then((res) => {
-        if (!res.ok) throw new Error('Could not load profile')
-        return res.json()
+    fetch('/api/profile/me', { headers: { Authorization: `Bearer ${token}` } })
+      .then(async (res) => {
+        const data = await res.json().catch(() => ({}))
+        if (res.status === 401 || res.status === 404) {
+          logout()
+          throw new Error(
+            res.status === 404
+              ? 'Your account was not found. Please sign in again.'
+              : 'Your session expired. Please sign in again.',
+          )
+        }
+        if (!res.ok) {
+          throw new Error(data.error || 'Could not load profile')
+        }
+        return data
       })
       .then(setProfile)
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false))
-  }, [])
+  }, [isAuthenticated, token, logout])
 
-  const preferences = profile?.preferences || {}
+  const preferences = useMemo(
+    () => formatPreferencesForDisplay(profile?.preferences),
+    [profile?.preferences],
+  )
+
   const settings = profile?.settings || {}
-  const savedItineraries = profile?.savedItineraries || []
+  const displayName = firstName(profile, user)
+
+  const savedPlaces = useMemo(() => {
+    const items = profile?.savedItineraries || []
+    if (items.length === 0) return SAVED_PLACES
+    return items.map((item, index) => ({
+      id: item.title,
+      href: '/itinerary',
+      offset: item.offset ?? index % 2 === 1,
+      image: item.image,
+      loc: item.location?.split(',')[0] || item.location,
+      name: item.title,
+      desc: item.description,
+    }))
+  }, [profile?.savedItineraries])
+
+  if (!isAuthenticated) {
+    return <Navigate to="/login" state={{ from: { pathname: '/profile' }, background: { pathname: '/' } }} replace />
+  }
+
+  function openIdentityEditor() {
+    setEditPreferences(normalizePreferences(profile?.preferences))
+    setIdentityError(null)
+    setEditingIdentity(true)
+  }
+
+  function closeIdentityEditor() {
+    if (!identitySubmitting) {
+      setEditingIdentity(false)
+      setIdentityError(null)
+    }
+  }
+
+  function openProfileEditor() {
+    setProfileEditError(null)
+    setPasswordEditError(null)
+    setAvatarEditError(null)
+    setEditingProfile(true)
+  }
+
+  function closeProfileEditor() {
+    if (!personalSubmitting && !passwordSubmitting && !avatarUploading) {
+      setEditingProfile(false)
+      setProfileEditError(null)
+      setPasswordEditError(null)
+      setAvatarEditError(null)
+    }
+  }
+
+  async function handleUploadAvatar(file) {
+    setAvatarEditError(null)
+    setAvatarUploading(true)
+    try {
+      if (file.size > MAX_AVATAR_BYTES) {
+        throw new Error('Image must be 2 MB or smaller.')
+      }
+      const updated = await uploadAvatar(file, true)
+      setProfile(updated)
+    } catch (err) {
+      setAvatarEditError(err.message)
+      throw err
+    } finally {
+      setAvatarUploading(false)
+    }
+  }
+
+  async function handleRemoveAvatar() {
+    if (!profile?.avatarUrl) return
+    setAvatarEditError(null)
+    setAvatarUploading(true)
+    try {
+      const updated = await removeAvatar(true)
+      setProfile(updated)
+    } catch (err) {
+      setAvatarEditError(err.message)
+      throw err
+    } finally {
+      setAvatarUploading(false)
+    }
+  }
+
+  async function handleSaveIdentity() {
+    if (!isIdentityComplete(editPreferences)) {
+      setIdentityError('Please choose at least one option for Pace, Focus, and Dining.')
+      return
+    }
+    setIdentityError(null)
+    setIdentitySubmitting(true)
+    try {
+      const updated = await updatePreferences(editPreferences, true)
+      setProfile((prev) =>
+        prev ? { ...prev, preferences: updated.preferences ?? editPreferences } : prev,
+      )
+      setEditingIdentity(false)
+    } catch (err) {
+      setIdentityError(err.message)
+    } finally {
+      setIdentitySubmitting(false)
+    }
+  }
+
+  async function handleSavePersonal(payload) {
+    setProfileEditError(null)
+    setPersonalSubmitting(true)
+    try {
+      const nameOrEmailChanged =
+        payload.displayName !== profile?.displayName ||
+        payload.email !== (profile?.email || '')
+
+      if (!nameOrEmailChanged) return
+
+      const updated = await updateProfile(
+        { displayName: payload.displayName, email: payload.email },
+        true,
+      )
+      setProfile(updated)
+    } catch (err) {
+      setProfileEditError(err.message)
+    } finally {
+      setPersonalSubmitting(false)
+    }
+  }
+
+  async function handleSavePassword(payload) {
+    if (payload.validationError) {
+      setPasswordEditError(payload.validationError)
+      return
+    }
+    if (!payload.newPassword) {
+      setPasswordEditError('Enter a new password.')
+      return
+    }
+    if (!payload.currentPassword) {
+      setPasswordEditError('Enter your current password.')
+      return
+    }
+
+    setPasswordEditError(null)
+    setPasswordSubmitting(true)
+    try {
+      const updated = await updateProfile(
+        {
+          currentPassword: payload.currentPassword,
+          newPassword: payload.newPassword,
+        },
+        true,
+      )
+      setProfile(updated)
+    } catch (err) {
+      setPasswordEditError(err.message)
+    } finally {
+      setPasswordSubmitting(false)
+    }
+  }
 
   return (
-    <div
-      className="text-on-surface font-body-md min-h-screen flex flex-col antialiased bg-background bg-paper-texture"
-      style={{ backgroundBlendMode: 'soft-light' }}
-    >
-      <HeaderNav />
+    <div className="home-v2 profile-v2 min-h-screen flex flex-col">
+      <HomeTopNav activePage="profile" />
 
-      <main className="flex-grow max-w-container-max mx-auto w-full px-margin-mobile md:px-margin-desktop pt-40 pb-24">
-        <header className="mb-16 md:mb-24 flex flex-col md:flex-row md:items-end justify-between gap-8">
-          <div>
-            <h1 className="font-display-lg-mobile md:font-display-lg text-primary mb-4">Profile</h1>
-            <p className="font-body-lg text-on-surface-variant max-w-lg">
-              Manage your personal preferences, review curated collections, and refine your next
-              escape into quiet sophistication.
-            </p>
-          </div>
-          {loading ? (
-            <p className="font-body-md text-on-surface-variant">Loading profile…</p>
-          ) : error ? (
-            <p className="font-body-md text-error">{error}</p>
-          ) : profile ? (
-            <div className="flex items-center gap-4">
-              <div className="w-16 h-16 rounded-full overflow-hidden border border-outline-variant shadow-sm bg-surface-container-low">
-                {profile.avatarUrl ? (
-                  <img
-                    alt={profile.displayName}
-                    className="w-full h-full object-cover"
-                    src={profile.avatarUrl}
-                  />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center bg-surface-container text-primary font-headline-md">
-                    {profile.displayName?.charAt(0) || '?'}
-                  </div>
-                )}
-              </div>
+      {editingProfile && profile ? (
+        <div className="profile-edit-wrap">
+          <button
+            type="button"
+            className="btn-back-profile"
+            onClick={closeProfileEditor}
+            disabled={personalSubmitting || passwordSubmitting || avatarUploading}
+          >
+            <span className="material-symbols-outlined">arrow_back</span>
+            Back to profile
+          </button>
+          <ProfileEditView
+            profile={profile}
+            onSavePersonal={handleSavePersonal}
+            onSavePassword={handleSavePassword}
+            onUploadAvatar={handleUploadAvatar}
+            onRemoveAvatar={handleRemoveAvatar}
+            personalSubmitting={personalSubmitting}
+            passwordSubmitting={passwordSubmitting}
+            avatarUploading={avatarUploading}
+            personalError={profileEditError}
+            passwordError={passwordEditError}
+            avatarError={avatarEditError}
+          />
+        </div>
+      ) : (
+        <>
+          <div className="profile-hero">
+            <div className="profile-hero-inner">
               <div>
-                <h2 className="font-headline-md text-on-background">{profile.displayName}</h2>
-                <p className="font-label-caps text-on-surface-variant uppercase">
-                  @{profile.username} · {formatMemberSince(profile.memberSince)}
+                <div className="hero-eyebrow">
+                  <div className="hero-eyebrow-dot" />
+                  <span className="hero-eyebrow-text">Account settings</span>
+                </div>
+                <h1 className="hero-headline">
+                  Your
+                  <br />
+                  <em>profile.</em>
+                </h1>
+                <p className="hero-sub">
+                  Manage your travel identity, preferences, and saved collections — all in one place.
                 </p>
               </div>
-            </div>
-          ) : null}
-        </header>
-
-        {!loading && !error && profile && (
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-gutter md:gap-12 items-start">
-            <div className="lg:col-span-4 flex flex-col gap-8">
-              <section className="bg-surface-container-lowest rounded border border-outline-variant shadow-magazine p-8 relative overflow-hidden group hover:-translate-y-1 transition-transform duration-300">
-                <div className="absolute -right-4 -top-4 opacity-5 text-primary pointer-events-none">
-                  <span
-                    className="material-symbols-outlined text-[120px]"
-                    style={{ fontVariationSettings: '"FILL" 1' }}
-                  >
-                    local_florist
+              {profile && (
+                <div className="avatar-card">
+                  <div className="avatar-ring">
+                    {profile.avatarUrl ? (
+                      <img src={profile.avatarUrl} alt={profile.displayName} />
+                    ) : (
+                      avatarInitial(profile, user)
+                    )}
+                  </div>
+                  <div>
+                    <p className="avatar-name">{profile.displayName || displayName}</p>
+                    <p className="avatar-handle">{profile.email || 'No email set'}</p>
+                  </div>
+                  <span className="avatar-tier">
+                    <span className="material-symbols-outlined">workspace_premium</span> Explorer
                   </span>
-                </div>
-                <h3 className="font-headline-lg text-primary mb-6 relative z-10">Identity</h3>
-                <div className="space-y-6 relative z-10">
-                  {[
-                    ['Pace', preferences.pace],
-                    ['Focus', preferences.focus],
-                    ['Dining', preferences.dining],
-                  ].map(([label, value]) => (
-                    <div
-                      key={label}
-                      className="flex justify-between items-center border-b border-outline-variant/30 pb-4"
-                    >
-                      <span className="font-body-md text-on-surface">{label}</span>
-                      <span className="font-label-caps text-secondary uppercase bg-surface-container py-1 px-3 rounded-full">
-                        {value || '—'}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-                <button
-                  type="button"
-                  className="mt-8 w-full border border-primary text-primary hover:bg-primary hover:text-on-primary rounded-full py-3 font-body-md transition-colors duration-200 text-center"
-                >
-                  Refine Profile
-                </button>
-              </section>
-
-              <section className="bg-surface-container-lowest rounded border border-outline-variant shadow-magazine p-8">
-                <h3 className="font-headline-md text-primary mb-6">Settings</h3>
-                <div className="space-y-4">
-                  <div className="flex flex-col gap-2">
-                    <label className="font-label-caps text-on-surface-variant uppercase">Language</label>
-                    <div className="relative">
-                      <select
-                        className="w-full appearance-none bg-surface border border-outline-variant rounded-full py-3 px-6 font-body-md text-on-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors cursor-pointer"
-                        value={settings.language || 'en-GB'}
-                        readOnly
-                        disabled
-                      >
-                        {LANGUAGE_OPTIONS.map((opt) => (
-                          <option key={opt.value} value={opt.value}>
-                            {opt.label}
-                          </option>
-                        ))}
-                      </select>
-                      <span className="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 text-on-surface-variant pointer-events-none">
-                        expand_more
-                      </span>
-                    </div>
-                  </div>
-                  <div className="flex flex-col gap-2 pt-4">
-                    <label className="font-label-caps text-on-surface-variant uppercase">Currency</label>
-                    <div className="relative">
-                      <select
-                        className="w-full appearance-none bg-surface border border-outline-variant rounded-full py-3 px-6 font-body-md text-on-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors cursor-pointer"
-                        value={settings.currency || 'MYR'}
-                        readOnly
-                        disabled
-                      >
-                        {CURRENCY_OPTIONS.map((opt) => (
-                          <option key={opt.value} value={opt.value}>
-                            {opt.label}
-                          </option>
-                        ))}
-                      </select>
-                      <span className="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 text-on-surface-variant pointer-events-none">
-                        expand_more
-                      </span>
-                    </div>
-                  </div>
-                  <div className="pt-6">
-                    <button
-                      type="button"
-                      className="flex items-center gap-2 text-error hover:text-error-container transition-colors font-body-md"
-                      onClick={() => {
-                        localStorage.removeItem('travelah_token')
-                        window.location.reload()
-                      }}
-                    >
-                      <span className="material-symbols-outlined">logout</span> Sign Out
-                    </button>
-                  </div>
-                </div>
-              </section>
-            </div>
-
-            <div className="lg:col-span-8" id="collections">
-              <div className="flex justify-between items-end mb-8">
-                <h2 className="font-headline-lg text-primary relative">Curated Collections</h2>
-                <button
-                  type="button"
-                  className="font-label-caps text-on-surface-variant uppercase hover:text-primary transition-colors flex items-center gap-1"
-                >
-                  View All <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
-                </button>
-              </div>
-              {savedItineraries.length === 0 ? (
-                <p className="font-body-md text-on-surface-variant">No saved itineraries yet.</p>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                  {savedItineraries.map((item) => (
-                    <article
-                      key={item.title}
-                      className={`group cursor-pointer ${item.offset ? 'md:mt-12' : ''}`}
-                    >
-                      <div className="relative aspect-[3/4] rounded overflow-hidden border border-outline-variant mb-6 shadow-magazine">
-                        <img
-                          alt={item.title}
-                          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                          src={item.image}
-                        />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                        <div className="absolute top-4 right-4 bg-surface-container-lowest/90 backdrop-blur-sm p-2 rounded-full text-primary">
-                          <span
-                            className="material-symbols-outlined"
-                            style={{ fontVariationSettings: '"FILL" 1' }}
-                          >
-                            bookmark
-                          </span>
-                        </div>
-                      </div>
-                      <div>
-                        <p className="font-label-caps text-secondary uppercase mb-2">{item.location}</p>
-                        <h3 className="font-headline-md text-on-background mb-2 group-hover:text-primary transition-colors">
-                          {item.title}
-                        </h3>
-                        <p className="font-body-md text-on-surface-variant line-clamp-2">{item.description}</p>
-                      </div>
-                    </article>
-                  ))}
+                  <button type="button" className="btn-edit-avatar" onClick={openProfileEditor}>
+                    <span className="material-symbols-outlined">edit</span> Edit
+                  </button>
                 </div>
               )}
             </div>
           </div>
-        )}
-      </main>
 
-      <footer className="bg-surface-container-low w-full rounded-t-lg border-t border-outline-variant px-margin-mobile md:px-margin-desktop py-16 flex flex-col items-center text-center gap-unit mt-auto">
-        <div className="font-headline-lg text-primary mb-4">travelah</div>
-        <div className="flex flex-wrap justify-center gap-8 mb-8">
-          {['Destinations', 'Heritage', 'Culture', 'Sustainability', 'Contact', 'Privacy'].map(
-            (link) => (
-              <a
-                key={link}
-                className="text-on-surface-variant hover:text-secondary transition-colors opacity-80 hover:opacity-100"
-                href="#"
-              >
-                {link}
-              </a>
-            ),
+          <div className="stats-strip">
+            <div className="stats-inner">
+              {STATS.map((stat, i) => (
+                <span key={stat.label} style={{ display: 'contents' }}>
+                  {i > 0 && <span className="stat-divider" aria-hidden="true" />}
+                  <div className="stat-item">
+                    <span className="stat-value">{stat.value}</span>
+                    <span className="stat-label">{stat.label}</span>
+                  </div>
+                </span>
+              ))}
+            </div>
+          </div>
+
+          {loading && <p className="profile-loading">Loading profile…</p>}
+          {error && <p className="profile-error">{error}</p>}
+
+          {!loading && !error && profile && (
+            <main className="profile-wrap">
+              <aside className="sidebar">
+                <div className="card nav-card">
+                  <h2 className="card-title">Account</h2>
+                  <Link to="/trips">
+                    <span className="material-symbols-outlined">luggage</span> My Trips
+                    <span className="material-symbols-outlined nav-arrow">chevron_right</span>
+                  </Link>
+                  <a href="#collections">
+                    <span className="material-symbols-outlined">bookmark</span> Saved Places
+                    <span className="material-symbols-outlined nav-arrow">chevron_right</span>
+                  </a>
+                  <a href="#activity">
+                    <span className="material-symbols-outlined">history</span> Recent Activity
+                    <span className="material-symbols-outlined nav-arrow">chevron_right</span>
+                  </a>
+                  <Link to="/plan">
+                    <span className="material-symbols-outlined">auto_awesome</span> Plan a Trip
+                    <span className="material-symbols-outlined nav-arrow">chevron_right</span>
+                  </Link>
+                </div>
+
+                <div className="card">
+                  <span className="material-symbols-outlined card-watermark">local_florist</span>
+                  <h2 className="card-title">Travel Identity</h2>
+                  <div className="identity-row">
+                    <span className="identity-key">Pace</span>
+                    <span className="identity-val">{preferences.pace}</span>
+                  </div>
+                  <div className="identity-row">
+                    <span className="identity-key">Focus</span>
+                    <span className="identity-val">{preferences.focus}</span>
+                  </div>
+                  <div className="identity-row">
+                    <span className="identity-key">Dining</span>
+                    <span className="identity-val">{preferences.dining}</span>
+                  </div>
+                  <div className="identity-row">
+                    <span className="identity-key">Budget</span>
+                    <span className="identity-val">Mid-range</span>
+                  </div>
+                  <button type="button" className="btn-outline-full" onClick={openIdentityEditor}>
+                    <span className="material-symbols-outlined" style={{ fontSize: 16 }}>
+                      tune
+                    </span>
+                    Refine preferences
+                  </button>
+                </div>
+
+                <div className="card">
+                  <h2 className="card-title">Settings</h2>
+                  <label className="field-label" htmlFor="profile-language">
+                    Language
+                  </label>
+                  <div className="field-select-wrap">
+                    <select
+                      id="profile-language"
+                      className="field-select"
+                      value={settings.language || 'en-GB'}
+                      disabled
+                    >
+                      {LANGUAGE_OPTIONS.map((opt) => (
+                        <option key={opt.value} value={opt.value}>
+                          {opt.label}
+                        </option>
+                      ))}
+                    </select>
+                    <span className="material-symbols-outlined">expand_more</span>
+                  </div>
+                  <label className="field-label" htmlFor="profile-currency">
+                    Currency
+                  </label>
+                  <div className="field-select-wrap">
+                    <select
+                      id="profile-currency"
+                      className="field-select"
+                      value={settings.currency || 'MYR'}
+                      disabled
+                    >
+                      {CURRENCY_OPTIONS.map((opt) => (
+                        <option key={opt.value} value={opt.value}>
+                          {opt.label}
+                        </option>
+                      ))}
+                    </select>
+                    <span className="material-symbols-outlined">expand_more</span>
+                  </div>
+                  <label className="field-label" htmlFor="profile-notifications">
+                    Notifications
+                  </label>
+                  <div className="field-select-wrap">
+                    <select id="profile-notifications" className="field-select" disabled defaultValue="reminders">
+                      <option value="reminders">Trip reminders only</option>
+                      <option value="all">All updates</option>
+                      <option value="none">None</option>
+                    </select>
+                    <span className="material-symbols-outlined">expand_more</span>
+                  </div>
+                  <button type="button" className="btn-signout" onClick={logout}>
+                    <span className="material-symbols-outlined">logout</span> Sign out
+                  </button>
+                </div>
+              </aside>
+
+              <div className="right-content">
+                <section id="collections">
+                  <div className="section-head">
+                    <div>
+                      <p className="section-eyebrow">Bookmarked from Explore</p>
+                      <h2 className="section-title">Saved Places</h2>
+                    </div>
+                    <Link to="/explore" className="view-all">
+                      Browse more <span className="material-symbols-outlined" style={{ fontSize: 16 }}>arrow_forward</span>
+                    </Link>
+                  </div>
+                  <div className="collections-grid">
+                    {savedPlaces.map((place) => (
+                      <Link
+                        key={place.id}
+                        to={place.href}
+                        className={`collection-card${place.offset ? ' offset' : ''}`}
+                      >
+                        <div className="col-img-wrap">
+                          <img src={place.image} alt={place.name} />
+                          <span className="col-bookmark">
+                            <span className="material-symbols-outlined">bookmark</span>
+                          </span>
+                        </div>
+                        <p className="col-loc">{place.loc}</p>
+                        <h3 className="col-name">{place.name}</h3>
+                        <p className="col-desc">{place.desc}</p>
+                      </Link>
+                    ))}
+                  </div>
+                </section>
+
+                <section id="activity">
+                  <div className="section-head">
+                    <div>
+                      <p className="section-eyebrow">What you&apos;ve been up to</p>
+                      <h2 className="section-title">Recent Activity</h2>
+                    </div>
+                  </div>
+                  <div className="activity-list">
+                    {RECENT_ACTIVITY.map((item) => (
+                      <div key={item.action} className="activity-item">
+                        <div className="activity-icon-wrap">
+                          <span className="material-symbols-outlined">{item.icon}</span>
+                        </div>
+                        <div className="activity-body">
+                          <p className="activity-action">{item.action}</p>
+                          <p className="activity-dest">{item.dest}</p>
+                        </div>
+                        <span className="activity-time">{item.time}</span>
+                      </div>
+                    ))}
+                  </div>
+                </section>
+
+                <section>
+                  <div className="section-head">
+                    <div>
+                      <p className="section-eyebrow">Irreversible actions</p>
+                      <h2 className="section-title">Account</h2>
+                    </div>
+                  </div>
+                  <div className="danger-card">
+                    <h3 className="danger-title">Delete account</h3>
+                    <p className="danger-sub">
+                      This permanently removes your profile, all saved trips, collections, and preferences.
+                      There&apos;s no way to undo this.
+                    </p>
+                    <button type="button" className="btn-danger">
+                      <span className="material-symbols-outlined" style={{ fontSize: 16 }}>
+                        delete
+                      </span>
+                      Delete my account
+                    </button>
+                  </div>
+                </section>
+              </div>
+            </main>
           )}
+        </>
+      )}
+
+      <footer className="profile-footer">
+        <div className="profile-footer-inner">
+          <Link to="/" className="profile-footer-logo">
+            travelah
+          </Link>
+          <ul className="profile-footer-nav">
+            <li>
+              <Link to="/explore">Destinations</Link>
+            </li>
+            <li>
+              <a href="#heritage">Heritage</a>
+            </li>
+            <li>
+              <a href="#about">About</a>
+            </li>
+            <li>
+              <a href="#contact">Contact</a>
+            </li>
+          </ul>
+          <span className="profile-footer-copy">© {new Date().getFullYear()} travelah</span>
         </div>
-        <p className="text-on-surface-variant opacity-80">
-          © {new Date().getFullYear()} travelah. Crafted for the discerning explorer.
-        </p>
       </footer>
+
+      <IdentitySetupOverlay
+        open={editingIdentity}
+        variant="edit"
+        preferences={editPreferences}
+        onChange={setEditPreferences}
+        onSubmit={handleSaveIdentity}
+        submitting={identitySubmitting}
+        error={identityError}
+        username={profile?.username || user?.username}
+        onClose={closeIdentityEditor}
+      />
     </div>
   )
 }

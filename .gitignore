@@ -4,3 +4,5 @@ dist/
 *.log
 .DS_Store
 nlp/.venv/
+client/public/avatars/*
+!client/public/avatars/.gitkeep

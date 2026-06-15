@@ -87,14 +87,56 @@ export async function findUserById(id) {
   return usersCollection().findOne({ _id: id })
 }
 
-export async function updateUserById(id, { preferences, settings, displayName, avatarUrl }) {
+export async function updateUserById(id, { preferences, settings, displayName, avatarUrl, email, currentPassword, newPassword }) {
+  const user = await findUserById(id)
+  if (!user) return null
+
   const $set = { updatedAt: new Date() }
   if (preferences) $set.preferences = preferences
   if (settings) $set.settings = settings
   if (displayName !== undefined && displayName !== null) {
-    $set.displayName = displayName.trim()
+    const trimmed = displayName.trim()
+    if (!trimmed) {
+      const err = new Error('Name cannot be empty')
+      err.code = 'VALIDATION'
+      throw err
+    }
+    $set.displayName = trimmed
   }
   if (avatarUrl !== undefined) $set.avatarUrl = avatarUrl
+
+  if (email !== undefined) {
+    const normalized = email?.trim().toLowerCase() || null
+    if (normalized) {
+      const existing = await findUserByEmail(normalized)
+      if (existing && existing._id !== id) {
+        const err = new Error('Email already registered')
+        err.code = 'EMAIL_TAKEN'
+        throw err
+      }
+    }
+    $set.email = normalized
+  }
+
+  if (newPassword) {
+    if (!currentPassword) {
+      const err = new Error('Current password is required to set a new password')
+      err.code = 'VALIDATION'
+      throw err
+    }
+    const valid = await verifyPassword(currentPassword, user.passwordHash)
+    if (!valid) {
+      const err = new Error('Current password is incorrect')
+      err.code = 'INVALID_PASSWORD'
+      throw err
+    }
+    if (newPassword.length < 8) {
+      const err = new Error('New password must be at least 8 characters')
+      err.code = 'VALIDATION'
+      throw err
+    }
+    $set.passwordHash = await hashPassword(newPassword)
+  }
 
   await usersCollection().updateOne({ _id: id }, { $set })
   const doc = await findUserById(id)

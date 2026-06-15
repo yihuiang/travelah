@@ -1,148 +1,294 @@
+import { Fragment } from 'react'
 import { Link } from 'react-router-dom'
-import HeaderNav from '../components/HeaderNav.jsx'
-import SiteFooter from '../components/SiteFooter.jsx'
+import HomeFooter from '../components/home/HomeFooter.jsx'
+import HomeTopNav from '../components/home/HomeTopNav.jsx'
 import TrendingSection from '../components/TrendingSection.jsx'
 import { useLanguage } from '../context/LanguageContext.jsx'
+import '../styles/home-v2.css'
 
-const MARQUEE_ITEMS = [
-  { emoji: '🏝️', label: 'Langkawi sunset spots', variant: 'filled' },
-  { emoji: '☕', label: 'Penang cafe hopping', variant: 'outline' },
-  { emoji: '✨', label: '热门打卡地点', variant: 'primary' },
-  { emoji: '🛶', label: 'Sabah hidden beaches', variant: 'filled' },
-  { emoji: '🌶️', label: 'Food hunting Malaysia', variant: 'outline' },
+const HERO_TILES = [
+  {
+    label: 'Kuala Lumpur',
+    alt: 'Kuala Lumpur Petronas Towers',
+    src: '/images/kuala-lumpur.png?v=2',
+    tall: true,
+    objectPosition: 'center top',
+  },
+  {
+    label: 'Penang',
+    alt: 'Penang George Town heritage street',
+    src: '/images/penang.png?v=2',
+    objectPosition: 'center center',
+    row: 1,
+    col: 2,
+  },
+  {
+    label: 'Batu Caves',
+    alt: 'Batu Caves',
+    src: 'https://images.unsplash.com/photo-1467720921878-3c7e86a0ffde?auto=format&fit=crop&w=600&q=80',
+    row: 2,
+    col: 2,
+  },
 ]
 
-function MarqueePill({ emoji, label, variant }) {
-  const base = 'pill-refined px-6 py-2.5 rounded-full text-xs font-label-caps flex items-center gap-3'
-  const variants = {
-    filled: `${base} bg-surface-container`,
-    outline: `${base} border border-outline-variant`,
-    primary: `${base} bg-primary text-white`,
-  }
-  return (
-    <div className={variants[variant]}>
-      <span>{emoji}</span> {label}
-    </div>
-  )
-}
+const HERO_TAGS = ['Langkawi', 'Penang Heritage', 'Kuching', 'Cameron Highlands', 'Sabah Rainforest']
+
+const MARQUEE_ITEMS = [
+  'Explore Malaysia',
+  'Local Intelligence',
+  'Real Reviews',
+  'Hidden Gems',
+  'Kuala Lumpur',
+  'Penang Heritage',
+  'Sabah Wildlife',
+  'AI Planner',
+]
+
+const STATS = [
+  { num: '14K+', label: 'Local posts indexed' },
+  { num: '13', label: 'Malaysian states' },
+  { num: '4', label: 'Social platforms' },
+  { num: '3', label: 'Languages' },
+]
+
+const PLACES = [
+  {
+    num: '01 — Penang',
+    name: 'George Town',
+    tag: 'Heritage · Food',
+    src: 'https://images.unsplash.com/photo-1596422846543-75c6fc197f07?auto=format&fit=crop&w=400&q=80',
+    alt: 'Penang',
+  },
+  {
+    num: '02 — Kedah',
+    name: 'Langkawi',
+    tag: 'Island · Nature',
+    src: 'https://images.unsplash.com/photo-1591945536032-9c20451cd41f?auto=format&fit=crop&w=400&q=80',
+    alt: 'Langkawi',
+  },
+  {
+    num: '03 — Sabah',
+    name: 'Kota Kinabalu',
+    tag: 'Adventure · Diving',
+    src: 'https://images.unsplash.com/photo-1504214208698-ea1916a2195a?auto=format&fit=crop&w=400&q=80',
+    alt: 'Sabah',
+  },
+  {
+    num: '04 — Pahang',
+    name: 'Taman Negara',
+    tag: 'Jungle · Wildlife',
+    src: 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?auto=format&fit=crop&w=400&q=80',
+    alt: 'Taman Negara',
+  },
+]
 
 export default function HomePage() {
   const { ui } = useLanguage()
-  const marqueeDoubled = [...MARQUEE_ITEMS, ...MARQUEE_ITEMS.slice(0, 2)]
 
   return (
-    <div
-      className="text-on-surface font-body-md min-h-screen flex flex-col antialiased bg-background bg-paper-texture"
-      style={{ backgroundBlendMode: 'soft-light' }}
-    >
-      <HeaderNav />
+    <div className="home-v2">
+      <HomeTopNav />
 
-      <main className="flex-grow flex flex-col items-center w-full max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop pt-40 pb-24 gap-32">
-        <section className="w-full flex flex-col items-center justify-center min-h-[50vh] relative">
-          <div className="absolute -z-10 top-0 opacity-10 blur-3xl w-[800px] h-[400px] bg-primary rounded-full filter mix-blend-multiply" />
-          <h1 className="font-display-lg text-primary max-w-6xl text-center flex flex-col leading-none">
-            <span className="mb-2 md:mb-4 text-[44px] md:text-[60px] leading-none">
-              {ui.welcomeTo}
-            </span>
-            <span className="italic font-light tracking-tight text-[56px] md:text-[140px] block leading-none md:-translate-y-4">
-              {ui.malaysia}
-            </span>
-          </h1>
-          <div className="editorial-rule w-full max-w-lg my-12" />
-          <div className="flex flex-col md:flex-row items-center gap-12 max-w-5xl">
-            <p className="font-body-lg text-on-surface-variant max-w-md text-left leading-relaxed opacity-80 border-l border-primary/20 pl-8">
-              {ui.heroSubtitle}
-            </p>
-            <div className="flex-grow w-full max-w-lg group">
-              <div className="relative flex items-center bg-surface-container-low border border-outline-variant rounded-full p-1.5 focus-within:ring-1 focus-within:ring-primary transition-all duration-500">
-                <div className="pl-6 flex items-center text-primary/40 group-focus-within:text-primary transition-colors">
-                  <span className="material-symbols-outlined">search</span>
-                </div>
-                <input
-                  className="flex-grow bg-transparent border-none focus:ring-0 text-body-lg text-on-surface placeholder-on-surface-variant/40 px-4 outline-none"
-                  placeholder={ui.searchPlaceholder}
-                  type="text"
-                />
-                <button
-                  type="button"
-                  className="bg-primary text-on-primary rounded-full px-8 py-3.5 font-label-caps hover:bg-primary-container transition-all active:scale-95"
-                >
-                  {ui.exploreBtn}
-                </button>
-              </div>
-            </div>
+      <section className="home-hero">
+        <div className="hero-left">
+          <div className="hero-eyebrow">
+            <div className="hero-eyebrow-dot" />
+            <span className="hero-eyebrow-text">Malaysia&apos;s travel intelligence</span>
           </div>
-        </section>
 
-        <div className="w-screen relative left-1/2 -translate-x-1/2 py-12 overflow-hidden border-y border-outline-variant/30 flex flex-col gap-8 bg-surface-container-lowest/50">
-          <div className="marquee-container flex overflow-hidden select-none">
-            <div className="animate-marquee whitespace-nowrap flex gap-6 items-center px-6">
-              {marqueeDoubled.map((item, i) => (
-                <span key={i} className="flex gap-6 items-center">
-                  <MarqueePill {...item} />
-                  <span className="text-outline-variant">/</span>
-                </span>
-              ))}
-            </div>
+          <h1 className="hero-headline">
+            The world
+            <br />
+            is <em>more</em>
+            <br />
+            <em>beautiful</em>
+            <br />
+            local.
+          </h1>
+
+          <p className="hero-sub">{ui.heroSubtitle}</p>
+
+          <div className="hero-search">
+            <span className="material-symbols-outlined" style={{ color: 'var(--sand)', marginRight: 4 }}>
+              search
+            </span>
+            <input type="text" placeholder={ui.searchPlaceholder} />
+            <Link to="/explore" className="btn-pill">
+              {ui.exploreBtn}
+            </Link>
+          </div>
+
+          <div className="hero-tags">
+            {HERO_TAGS.map((label) => (
+              <Link key={label} to="/explore" className="tag">
+                {label}
+              </Link>
+            ))}
           </div>
         </div>
 
-        <TrendingSection />
-
-        <section
-          id="plan"
-          className="w-full grid lg:grid-cols-2 gap-16 items-center py-20 px-8 bg-surface-container-low rounded-[3rem] relative overflow-hidden"
-        >
-          <div
-            className="absolute top-0 right-0 w-1/2 h-full opacity-10 pointer-events-none"
-            style={{
-              backgroundImage: "url('https://www.transparenttextures.com/patterns/linen.png')",
-            }}
-          />
-          <div className="relative z-10 flex flex-col gap-8">
-            <div className="w-12 h-12 rounded-full border border-primary flex items-center justify-center">
-              <span className="material-symbols-outlined text-primary">auto_awesome</span>
+        <div className="hero-right">
+          {HERO_TILES.map((tile) => (
+            <div
+              key={tile.label}
+              className={`hero-tile${tile.tall ? ' hero-tile-tall' : ''}`}
+              style={
+                tile.tall
+                  ? { gridRow: '1 / 3', gridColumn: '1' }
+                  : { gridRow: tile.row, gridColumn: tile.col }
+              }
+            >
+              <img
+                src={tile.src}
+                alt={tile.alt}
+                loading="eager"
+                style={tile.objectPosition ? { objectPosition: tile.objectPosition } : undefined}
+              />
+              <div className="tile-label">{tile.label}</div>
             </div>
-            <h2 className="font-headline-lg text-6xl text-primary leading-[1.1]">
-              Your Perfect Journey, <br />
-              <span className="italic">Synthesized.</span>
+          ))}
+        </div>
+      </section>
+
+      <div className="stat-strip">
+        {STATS.map((stat, index) => (
+          <Fragment key={stat.label}>
+            {index > 0 && <div className="stat-divider" />}
+            <div className="stat-item">
+              <span className="stat-num">{stat.num}</span>
+              <span className="stat-label">{stat.label}</span>
+            </div>
+          </Fragment>
+        ))}
+      </div>
+
+      <div className="marquee-section" aria-hidden="true">
+        <div className="marquee-track">
+          {[...MARQUEE_ITEMS, ...MARQUEE_ITEMS].map((item, index) => (
+            <span key={`${item}-${index}`} className="marquee-item">
+              <span className="marquee-dot" />
+              {item}
+            </span>
+          ))}
+        </div>
+      </div>
+
+      <TrendingSection variant="bento" />
+
+      <section className="planner-section" id="plan">
+        <div className="planner-inner">
+          <div className="planner-left">
+            <span className="planner-eyebrow-badge">AI Concierge</span>
+            <h2 className="planner-headline">
+              Your trip,
+              <br />
+              <em>your language,</em>
+              <br />
+              your people.
             </h2>
-            <p className="font-body-lg text-on-surface-variant max-w-md opacity-80">
-              Our bespoke AI planner understands that true travel is about feeling, not just
-              visiting. We curate itineraries that balance high-energy discovery with moments of
-              pure tranquility.
+            <p className="planner-sub">
+              Tell us your vibe in Malay, Chinese, or English. We pull from thousands of real social
+              posts to build an itinerary that actually fits how you travel.
             </p>
-            <div className="flex flex-wrap gap-4 mt-4">
-              <Link
-                to="/plan"
-                className="bg-primary text-white px-10 py-5 rounded-full font-label-caps hover:bg-primary-container hover:shadow-xl transition-all flex items-center gap-3"
-              >
-                Start Planning <span className="material-symbols-outlined text-sm">east</span>
+            <div className="planner-actions">
+              <Link to="/plan" className="btn-lime">
+                Start planning
+                <span className="material-symbols-outlined" style={{ fontSize: 16 }}>
+                  east
+                </span>
               </Link>
-              <button
-                type="button"
-                className="border border-outline px-10 py-5 rounded-full font-label-caps hover:bg-white transition-all"
-              >
-                View Case Studies
+              <a href="#explore" className="btn-ghost">
+                See examples
+              </a>
+            </div>
+          </div>
+
+          <div className="planner-right">
+            <div className="chat-window">
+              <div className="chat-msg user">
+                <div className="chat-avatar">YI</div>
+                <div className="chat-bubble">
+                  Planning 5 days in Sabah, into hiking and local food. Not a resort person.
+                </div>
+              </div>
+
+              <div className="chat-msg">
+                <div className="chat-avatar ai-avatar">t</div>
+                <div className="chat-bubble">
+                  Got it — 5 days, Kinabalu foothills + Kota Belud tamu market + seafood at Kg.
+                  Nelayan. I&apos;ll skip the resort strips entirely. Want me to add a night in
+                  Kundasang?
+                </div>
+              </div>
+
+              <div className="chat-msg user">
+                <div className="chat-avatar">YI</div>
+                <div className="chat-bubble">Yes! And budget-ish accommodation if possible 🙏</div>
+              </div>
+
+              <div className="chat-msg">
+                <div className="chat-avatar ai-avatar">t</div>
+                <div className="chat-typing">
+                  <div className="typing-dot" />
+                  <div className="typing-dot" />
+                  <div className="typing-dot" />
+                </div>
+              </div>
+            </div>
+
+            <div className="chat-input-bar">
+              <span>Describe your trip in any language…</span>
+              <button type="button" className="chat-send" aria-label="Send">
+                <span className="material-symbols-outlined" style={{ fontSize: 18 }}>
+                  arrow_upward
+                </span>
               </button>
             </div>
           </div>
-          <div className="relative lg:h-[400px] flex items-center justify-center">
-            <div className="w-full h-full border border-primary/10 rounded-2xl p-8 relative flex flex-col justify-center items-center gap-4 bg-white/50 backdrop-blur-sm">
-              <div className="w-full h-px bg-primary/10" />
-              <div className="text-primary font-headline-md italic opacity-60 text-center">
-                &ldquo;The Sabah itinerary was perfect—the timing between the jungle hike and the
-                spa retreat was impeccable.&rdquo;
-              </div>
-              <div className="font-label-caps text-on-surface-variant">— Eleanor R., London</div>
-              <div className="w-full h-px bg-primary/10" />
-            </div>
-            <div className="absolute -bottom-10 -right-10 w-40 h-40 border border-primary/20 rounded-full opacity-50" />
-          </div>
-        </section>
-      </main>
+        </div>
+      </section>
 
-      <SiteFooter />
+      <section className="home-section">
+        <div className="section-header">
+          <div>
+            <p className="section-eyebrow">Top destinations</p>
+            <h2 className="section-title">
+              Go here
+              <br />
+              next.
+            </h2>
+          </div>
+          <Link to="/explore" className="section-link">
+            All destinations →
+          </Link>
+        </div>
+
+        <div className="places-grid">
+          {PLACES.map((place) => (
+            <Link key={place.name} to="/explore" className="place-card">
+              <img src={place.src} alt={place.alt} loading="lazy" />
+              <div className="place-info">
+                <p className="place-num">{place.num}</p>
+                <p className="place-name">{place.name}</p>
+                <span className="place-tag">{place.tag}</span>
+              </div>
+            </Link>
+          ))}
+        </div>
+      </section>
+
+      <div className="testimonial-section">
+        <blockquote className="testimonial-q">
+          &ldquo;We found a waterfall in Perak that wasn&apos;t on any blog. It felt like having a
+          local as a guide.&rdquo;
+        </blockquote>
+        <div className="testimonial-author">
+          <div className="t-avatar">AR</div>
+          <span className="t-name">Arif Rahman — Singapore</span>
+        </div>
+      </div>
+
+      <HomeFooter />
     </div>
   )
 }

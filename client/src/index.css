@@ -23,6 +23,64 @@ body {
   box-shadow: 0px 20px 60px rgba(92, 30, 5, 0.08);
 }
 
+.hero-sticker {
+  cursor: pointer;
+  z-index: 20;
+}
+
+@keyframes sticker-float {
+  0%,
+  100% {
+    transform: rotate(var(--sticker-rotate, 0deg)) translateY(0);
+  }
+
+  50% {
+    transform: rotate(calc(var(--sticker-rotate, 0deg) + 4deg)) translateY(-8px);
+  }
+}
+
+.hero-sticker-img {
+  filter: drop-shadow(0 8px 24px rgba(92, 30, 5, 0.12));
+  animation: sticker-float 4.5s ease-in-out infinite;
+  transition:
+    filter 0.45s ease,
+    transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.hero-sticker:nth-child(2) .hero-sticker-img {
+  animation-duration: 5.5s;
+  animation-delay: -1.2s;
+}
+
+.hero-sticker:nth-child(3) .hero-sticker-img {
+  animation-duration: 6s;
+  animation-delay: -2.4s;
+}
+
+.hero-sticker:hover .hero-sticker-img {
+  animation: none;
+  transform: rotate(calc(var(--sticker-rotate, 0deg) + 10deg)) scale(1.16) translateY(-14px);
+  filter: drop-shadow(0 20px 40px rgba(92, 30, 5, 0.24));
+}
+
+.hero-sticker:active .hero-sticker-img {
+  animation: none;
+  transform: rotate(calc(var(--sticker-rotate, 0deg) + 4deg)) scale(1.08) translateY(-6px);
+  transition-duration: 0.12s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-sticker-img {
+    animation: none;
+    transition: none;
+  }
+
+  .hero-sticker:hover .hero-sticker-img,
+  .hero-sticker:active .hero-sticker-img {
+    transform: rotate(var(--sticker-rotate, 0deg));
+  }
+}
+
 .text-glow {
   text-shadow: 0 0 30px rgba(255, 255, 255, 0.4);
 }
@@ -69,15 +127,22 @@ body {
   background: linear-gradient(to right, transparent, #87736c44, transparent);
 }
 
-.bg-texture {
+.home-page-bg {
   background-color: #fff8f6;
   background-image: repeating-linear-gradient(
     45deg,
-    transparent,
-    transparent 10px,
-    rgba(135, 115, 108, 0.03) 10px,
-    rgba(135, 115, 108, 0.03) 11px
+    rgba(245, 229, 224, 0.28) 0,
+    rgba(245, 229, 224, 0.28) 1px,
+    transparent 0,
+    transparent 50%
   );
+  background-size: 20px 20px;
+  background-attachment: fixed;
+}
+
+.batik-overlay {
+  background-image: url('https://www.transparenttextures.com/patterns/batik.png');
+  opacity: 0.05;
 }
 
 .shadow-magazine {

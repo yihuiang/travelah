@@ -10,8 +10,8 @@ export const UI_STRINGS = {
     welcomeTo: 'Welcome to',
     malaysia: 'Malaysia.',
     heroSubtitle:
-      'A curated journey through heritage, modern luxury, and breathtaking landscapes, tailored for the discerning explorer seeking the soul of Southeast Asia.',
-    searchPlaceholder: 'Where is your next escape?',
+      'NLP-powered itineraries from real travellers on Instagram, TikTok & RedNote — in your language.',
+    searchPlaceholder: 'Where will your journey begin?',
     exploreBtn: 'Explore',
     trendingNow: 'Trending Now',
   },
