@@ -4,7 +4,7 @@ import AuthModal from '../components/AuthModal.jsx'
 import SocialAuthButtons from '../components/SocialAuthButtons.jsx'
 import { useAuth } from '../context/AuthContext.jsx'
 import { useLanguage } from '../context/LanguageContext.jsx'
-import { needsOnboarding } from '../utils/preferenceSuggestions.js'
+import { needsOnboarding, resolvePostAuthPath } from '../utils/preferenceSuggestions.js'
 import { persistRememberedLogin, readRememberedLogin } from '../utils/rememberLogin.js'
 
 const rememberedLogin = readRememberedLogin()
@@ -33,7 +33,7 @@ export default function LoginPage() {
       })
       return
     }
-    navigate('/', { replace: true })
+    navigate(resolvePostAuthPath(), { replace: true })
   }
 
   async function handleSubmit(e) {

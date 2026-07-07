@@ -29,11 +29,11 @@ export default function RegisterSuccessOverlay({ open, onDiscover }) {
               if (onDiscover) {
                 onDiscover()
               } else {
-                navigate('/explore', { replace: true })
+                navigate('/', { replace: true })
               }
             }}
           >
-            {t('Take me to Explore')}
+            {t('Go to homepage')}
           </button>
         </div>
       </div>

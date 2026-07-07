@@ -77,3 +77,7 @@ export function formatPreferencesForDisplay(preferences) {
     budget: normalized.budget.length ? normalized.budget.join(', ') : '—',
   }
 }
+
+export function resolvePostAuthPath() {
+  return '/'
+}

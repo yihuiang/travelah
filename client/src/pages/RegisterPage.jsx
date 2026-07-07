@@ -5,7 +5,7 @@ import SocialAuthButtons from '../components/SocialAuthButtons.jsx'
 import IdentitySetupOverlay from '../components/IdentitySetupOverlay.jsx'
 import RegisterSuccessOverlay from '../components/RegisterSuccessOverlay.jsx'
 import { DEFAULT_PREFERENCES, normalizePreferences } from '../constants/travelPreferences.js'
-import { isIdentityComplete, needsOnboarding } from '../utils/preferenceSuggestions.js'
+import { isIdentityComplete, needsOnboarding, resolvePostAuthPath } from '../utils/preferenceSuggestions.js'
 import { useAuth } from '../context/AuthContext.jsx'
 import { useLanguage } from '../context/LanguageContext.jsx'
 
@@ -52,7 +52,7 @@ export default function RegisterPage() {
   const googleEmailLocked = Boolean(googleSignup?.email)
   const passwordError = passwordTouched ? getPasswordValidationError(password) : ''
   const emailError = emailTouched ? getEmailValidationError(email) : ''
-  const afterOnboardingPath = location.state?.from?.pathname || '/explore'
+  const afterOnboardingPath = resolvePostAuthPath()
 
   useEffect(() => {
     if (!googleSignup) return
