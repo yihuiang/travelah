@@ -751,17 +751,14 @@ export default function PlanPage() {
       }
 
       setGeneratedItinerary(itinerary)
-      const coverageHint = Array.isArray(itinerary.coverageNotes)
-        ? itinerary.coverageNotes.filter(Boolean).join(' ')
-        : ''
-      if (coverageHint) {
-        setNotesAppliedHint(coverageHint)
-      } else if (extraNotes.trim()) {
+      if (extraNotes.trim()) {
         if (itinerary.notesRateLimited) {
           setNotesAppliedHint(t('We applied your note using basic matching (AI limit reached).'))
         } else {
           setNotesAppliedHint(t('We applied your note when picking places.'))
         }
+      } else {
+        setNotesAppliedHint('')
       }
       goToStep(6)
     } catch (err) {
