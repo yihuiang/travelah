@@ -1389,7 +1389,7 @@ export default function PlanPage() {
             rows={3}
             value={extraNotes}
             onChange={(e) => setExtraNotes(e.target.value)}
-            placeholder={t("Type in Malay, Chinese, or English — e.g. 'not a resort person', 'halal food only', 'travelling with elderly parents'…")}
+            placeholder={t('Type your preferences…')}
           />
           <p className="prompt-hint">{t('We understand Bahasa Malaysia, Mandarin, and English.')}</p>
 

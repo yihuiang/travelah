@@ -11,6 +11,7 @@
   --ff-serif: 'Instrument Serif', Georgia, serif;
   --ff-sans: 'Satoshi', system-ui, sans-serif;
   --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --home-nav-h: 62px;
 
   background: var(--cream);
   color: var(--ink);
@@ -1173,6 +1174,10 @@
 }
 
 @media (max-width: 900px) {
+  .home-v2 {
+    --home-nav-h: 73px;
+  }
+
   .home-v2 .home-hero {
     grid-template-columns: 1fr;
     height: auto;

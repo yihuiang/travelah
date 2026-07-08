@@ -522,7 +522,13 @@ export default function PlaceDetailPage() {
             className="btn-floating"
             loading={itineraryLoading}
             onAdd={() => addToItinerary(place)}
-          />
+          >
+            <>
+              <span className="material-symbols-outlined">add_location</span>
+              <span className="btn-floating-text btn-floating-text--long">{t('Add to itinerary')}</span>
+              <span className="btn-floating-text btn-floating-text--short">{t('Add')}</span>
+            </>
+          </AddToItineraryButton>
         </div>
       )}
 

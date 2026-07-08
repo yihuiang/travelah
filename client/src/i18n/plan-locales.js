@@ -73,8 +73,7 @@ export const PLAN_STRINGS_MS = {
   'General {{state}} itinerary': 'Jadual umum {{state}}',
   "we'll plan with popular places in {{state}}": 'kami akan rancang dengan tempat popular di {{state}}',
   '(optional)': '(pilihan)',
-  "Type in Malay, Chinese, or English — e.g. 'not a resort person', 'halal food only', 'travelling with elderly parents'…":
-    "Taip dalam BM, Cina, atau Inggeris — cth. 'bukan jenis resort', 'makanan halal sahaja', 'melancong dengan ibu bapa tua'…",
+  'Type your preferences…': 'Taip keutamaan anda…',
   'We understand Bahasa Malaysia, Mandarin, and English.':
     'Kami faham Bahasa Malaysia, Mandarin, dan Inggeris.',
   'Review my trip': 'Semak perjalanan saya',
@@ -178,8 +177,7 @@ export const PLAN_STRINGS_ZH = {
   'General {{state}} itinerary': '{{state}} 通用行程',
   "we'll plan with popular places in {{state}}": '将使用{{state}}热门地点规划行程',
   '(optional)': '（可选）',
-  "Type in Malay, Chinese, or English — e.g. 'not a resort person', 'halal food only', 'travelling with elderly parents'…":
-    '可用马来语、中文或英语输入，例如「不喜欢度假村」「只要清真食物」「带长辈出行」等…',
+  'Type your preferences…': '输入你的偏好…',
   'We understand Bahasa Malaysia, Mandarin, and English.':
     '我们支持马来语、中文和英语。',
   'Review my trip': '确认我的行程',

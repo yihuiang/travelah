@@ -648,6 +648,10 @@
   cursor: wait;
 }
 
+.place-detail-v2 .btn-floating-text--short {
+  display: none;
+}
+
 .place-detail-v2 .place-detail-status {
   text-align: center;
   padding: 64px 0;
@@ -661,7 +665,7 @@
 
 @media (max-width: 960px) {
   .place-detail-v2 .place-detail-page {
-    padding: 0 20px 48px;
+    padding: 0 20px 96px;
   }
 
   .place-detail-v2 .back-link {
@@ -694,10 +698,41 @@
   }
 
   .place-detail-v2 .floating-bar {
-    flex-wrap: wrap;
+    left: auto;
+    right: calc(16px + 7.5rem + 6px);
+    bottom: 16px;
+    transform: none;
+    width: max-content;
+    max-width: calc(100vw - 32px - 7.5rem - 6px);
+    flex-wrap: nowrap;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 5px;
+    gap: 6px;
+    border-radius: 100px;
+    z-index: 999;
+  }
+
+  .place-detail-v2 .btn-floating-save {
+    width: 40px;
+    height: 40px;
+    flex-shrink: 0;
+  }
+
+  .place-detail-v2 .btn-floating {
+    flex: 0 0 auto;
     justify-content: center;
-    padding: 10px;
-    gap: 10px;
+    padding: 10px 14px;
+    font-size: 11px;
+    letter-spacing: 0.04em;
+  }
+
+  .place-detail-v2 .btn-floating-text--short {
+    display: inline;
+  }
+
+  .place-detail-v2 .btn-floating-text--long {
+    display: none;
   }
 
   .place-detail-v2 .floating-info {
