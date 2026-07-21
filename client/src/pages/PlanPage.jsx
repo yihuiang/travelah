@@ -41,7 +41,7 @@ const RECOMMENDED_DESTINATIONS = [
 const VIBE_OPTIONS = [
   { id: 'culture', label: 'Culture & Heritage', sub: 'Temples, street art, history', icon: 'museum' },
   { id: 'food', label: 'Food First', sub: 'Hawker stalls, local eats', icon: 'restaurant' },
-  { id: 'nature', label: 'Nature & Hiking', sub: 'Trails, parks, waterfalls', icon: 'forest' },
+  { id: 'nature', label: 'Nature', sub: 'Trails, parks, waterfalls', icon: 'forest' },
   { id: 'adventure', label: 'Adventure', sub: 'Diving, climbing, rafting', icon: 'surfing' },
   { id: 'relax', label: 'Relax & Unwind', sub: 'Slow days, beaches, wellness', icon: 'spa' },
   { id: 'shopping', label: 'Markets & Shopping', sub: 'Night markets, local crafts', icon: 'storefront' },

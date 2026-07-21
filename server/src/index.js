@@ -602,32 +602,33 @@ app.post('/api/auth/forgot-password', async (req, res) => {
       return res.status(400).json({ error: 'Email is required' })
     }
 
-    const { token } = await createPasswordResetToken(email)
-    const payload = {
-      ok: true,
-      message:
-        'If an account exists with that email, you will receive password reset instructions shortly.',
+    const { ok, token, reason } = await createPasswordResetToken(email)
+    if (!ok) {
+      if (reason === 'NO_PASSWORD') {
+        return res.status(400).json({
+          error: 'This account uses Google sign-in. Sign in with Google instead.',
+        })
+      }
+      return res.status(404).json({ error: 'No account found with that email.' })
     }
 
-    if (token) {
-      const origin = getClientOrigin(req)
-      const resetLink = `${origin}/reset-password/${token}`
+    const payload = { ok: true, message: 'Continue to reset your password.' }
+    const origin = getClientOrigin(req)
+    const resetLink = `${origin}/reset-password/${token}`
 
-      if (isPasswordResetEmailConfigured()) {
-        try {
-          await sendPasswordResetEmail(email, resetLink)
-          payload.message =
-            'Check your email for a password reset link. It expires in 1 hour.'
-        } catch (err) {
-          console.error('[password-reset-email]', err.message || err)
-          payload.resetLink = resetLink
-          payload.message = 'We could not send email. Continue below to reset your password.'
-        }
-      } else {
-        // No email server — return link so the app can open the reset page directly.
+    if (isPasswordResetEmailConfigured()) {
+      try {
+        await sendPasswordResetEmail(email, resetLink)
+        payload.message =
+          'Check your email for a password reset link. It expires in 1 hour.'
+      } catch (err) {
+        console.error('[password-reset-email]', err.message || err)
         payload.resetLink = resetLink
-        payload.message = 'Continue to reset your password.'
+        payload.message = 'We could not send email. Continue below to reset your password.'
       }
+    } else {
+      // No email server — return link so the app can open the reset page directly.
+      payload.resetLink = resetLink
     }
 
     res.json(payload)

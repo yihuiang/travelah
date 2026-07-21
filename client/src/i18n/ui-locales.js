@@ -209,6 +209,12 @@ export const STRING_LOCALES = {
       'Anda masih boleh sunting perhentian ini pada bila-bila masa dalam Perjalanan Saya.',
     'Please enter a valid email': 'Sila masukkan e-mel yang sah',
     'Save successful': 'Berjaya disimpan',
+    'No account found with that email.': 'Tiada akaun dijumpai dengan e-mel itu.',
+    'This account uses Google sign-in. Sign in with Google instead.':
+      'Akaun ini menggunakan log masuk Google. Sila log masuk dengan Google.',
+    'Could not send reset instructions': 'Tidak dapat menghantar arahan tetapan semula',
+    'Check your email for a password reset link. It expires in 1 hour.':
+      'Semak e-mel anda untuk pautan tetapan semula kata laluan. Ia tamat dalam 1 jam.',
     'No account found for this Google email. Please create an account first.':
       'Tiada akaun dijumpai untuk e-mel Google ini. Sila daftar akaun dahulu.',
     'Create an account with your Google email, then choose a password.':
@@ -377,6 +383,12 @@ export const STRING_LOCALES = {
     'You can still edit this stop anytime in My Trips.': '你随时可以在「我的行程」中编辑此站点。',
     'Please enter a valid email': '请输入有效的电子邮箱',
     'Save successful': '保存成功',
+    'No account found with that email.': '未找到使用该邮箱的账号。',
+    'This account uses Google sign-in. Sign in with Google instead.':
+      '此账号使用 Google 登录，请改用 Google 登录。',
+    'Could not send reset instructions': '无法发送重置说明',
+    'Check your email for a password reset link. It expires in 1 hour.':
+      '请查收邮箱中的密码重置链接，链接 1 小时后失效。',
     'No account found for this Google email. Please create an account first.':
       '未找到与此 Google 邮箱关联的账号，请先注册账号。',
     'Create an account with your Google email, then choose a password.':

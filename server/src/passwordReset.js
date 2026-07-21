@@ -17,12 +17,13 @@ export async function ensurePasswordResetIndexes() {
 
 export async function createPasswordResetToken(email) {
   const normalized = email?.trim().toLowerCase()
-  if (!normalized) return { ok: true, token: null, userId: null }
+  if (!normalized) return { ok: false, reason: 'MISSING_EMAIL', token: null, userId: null }
 
   const user = await findUserByEmail(normalized)
-  if (!user || !user.passwordHash) {
-    // No password account (e.g. Google-only) — same response shape for privacy.
-    return { ok: true, token: null, userId: null }
+  if (!user) return { ok: false, reason: 'NOT_FOUND', token: null, userId: null }
+  if (!user.passwordHash) {
+    // Google-only account — no password to reset.
+    return { ok: false, reason: 'NO_PASSWORD', token: null, userId: null }
   }
 
   const userId = typeof user._id === 'string' ? user._id : user._id?.toString()

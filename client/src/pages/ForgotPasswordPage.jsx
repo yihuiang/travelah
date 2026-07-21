@@ -42,7 +42,14 @@ export default function ForgotPasswordPage() {
         body: JSON.stringify({ email: trimmed }),
       })
       const data = await res.json().catch(() => ({}))
-      if (!res.ok) throw new Error(data.error || 'Could not send reset instructions')
+      if (!res.ok) {
+        const fallback =
+          res.status === 404
+            ? 'No account found with that email.'
+            : 'Could not send reset instructions'
+        setError(t(data.error || fallback))
+        return
+      }
 
       if (data.resetLink) {
         const path = resetPathFromLink(data.resetLink)
@@ -53,11 +60,10 @@ export default function ForgotPasswordPage() {
       }
 
       setSuccess(
-        data.message ||
-          t('If an account exists with that email, you will receive password reset instructions shortly.'),
+        t(data.message || 'Check your email for a password reset link. It expires in 1 hour.'),
       )
     } catch (err) {
-      setError(err.message)
+      setError(t(err.message || 'Could not send reset instructions'))
     } finally {
       setSubmitting(false)
     }
